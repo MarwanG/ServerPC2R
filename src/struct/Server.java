@@ -20,17 +20,19 @@ public class Server extends Thread {
 	int capacity;
 	int port;
 	int nbConnected;
+	int ids = 0;
 
 	public Server(){
-		capacity = Config.nbJouer;
-		port = Config.port;
+		this(Config.nbJouer,Config.port);
+	}
+	
+	public Server(int c , int port){
+		this.capacity = c;
+		this.port = port;
 		nbConnected = 0;
-		
 		players = new ArrayList<JouerClient>();
 		sockets = new ArrayList<Socket>();
 		streams = new ArrayList<DataOutputStream>();
-		System.out.println("just runned");
-		
 	}
 	
 	public void addPlayer(JouerClient player){
@@ -38,9 +40,19 @@ public class Server extends Thread {
 		nbConnected++;
 	}
 	
-	public void printToAll(String s,JouerClient jc){
+	public void removePlayer(int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(!players.get(i).equals(jc))
+			if(players.get(i).getId() == id){
+				players.remove(i);
+				break;
+			}
+		}
+		nbConnected--;
+	}
+	
+	public void printToAll(String s,int id){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getId() != id)
 				players.get(i).printToStream(s);
 		}
 	}
@@ -57,7 +69,8 @@ public class Server extends Thread {
 						outchan.writeChars("Maximum capacity please try again later\n");
 						client.close();
 					}else{
-						JouerClient jc = new JouerClient(client,this);
+						JouerClient jc = new JouerClient(ids,client,this);
+						ids++;
 						jc.start();
 					}
 				}

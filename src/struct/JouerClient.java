@@ -15,6 +15,7 @@ public class JouerClient extends Thread {
 	int score;
 	TypeJouer type;
 	Server serv;
+	int id;
 	
 	public JouerClient(String name , Socket s,TypeJouer type){
 		this.name = name;
@@ -29,7 +30,8 @@ public class JouerClient extends Thread {
 		serv.addPlayer(this);
 	}
 	
-	public JouerClient(Socket s,Server serv){
+	public JouerClient(int id,Socket s,Server serv){
+		this.id = id;
 		this.s = s;
 		this.serv = serv;
 		try {
@@ -52,23 +54,30 @@ public class JouerClient extends Thread {
 		this.name=s;
 	}
 	
+	public int getInt(){
+		return id;
+	}
+	
 	public void run(){
 		try {
 			while (true) {
 				String command = inchan.readLine();
-				if(command.equals("EXIT")) { 
-					System.out.println("Fin de connexion."); 
+				if(command.equals("EXIT/"+name+"/")) { 
+					//TODO if is the drawer;
+					outchan.writeChars("Déconnexion de \""+name+"\" \n");
+					serv.printToAll("EXITED/"+name+"/\n", id);
 					break;
 					} 
 				if(command.contains("CONNECT/")){
 					init(command.split("/")[1]);
 					outchan.writeChars("Nouvelle connexion de \""+ name +"\" \n");
-					serv.printToAll("Nouvelle connexion de \""+ name +"\" \n",this);
+					serv.printToAll("CONNECTED/"+name+"/\n",id);
 				}else{
-					serv.printToAll(name +" : "+command + "\n",this);
+					serv.printToAll(name +" : "+command + "\n",id);
 				}
 			}
 			s.close();
+			serv.removePlayer(id);
 		}catch(IOException e) { 
 			e.printStackTrace(); 
 			System.exit(1);
