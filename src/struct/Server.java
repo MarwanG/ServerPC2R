@@ -19,7 +19,9 @@ public class Server extends Thread {
 	int port;
 	int nbConnected;
 	int ids = 0;
-
+	boolean complete = false;
+	boolean running = false;
+	
 	public Server(){
 		this(Config.nbJouer,Config.port);	
 	}
@@ -36,6 +38,8 @@ public class Server extends Thread {
 	public void addPlayer(JouerClient player){
 		this.players.add(player);
 		nbConnected++;
+		if(nbConnected == capacity)
+			complete = true;
 	}
 	
 	public void removePlayer(int id){
@@ -60,25 +64,45 @@ public class Server extends Thread {
 		{
 			try {
 				serv = new ServerSocket(port);
-				while(true && this.nbConnected < this.capacity){
-					client = serv.accept();
-					System.out.println("New connection \n");
-					if(nbConnected >= capacity){
+				while(true){
+					if(!this.complete){
+						client = serv.accept();
+						System.out.println("New connection \n");
+						if(nbConnected >= capacity){
+							DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
+							outchan.writeChars("Maximum capacity please try again later\n");
+							client.close();
+						}else{
+							JouerClient jc = new JouerClient(ids,client,this);
+							ids++;
+							jc.start();
+						}
+					}else{
+						if(!running){
+							System.out.println("game gona run");
+							gameRun();
+						}							
+						client = serv.accept();
+						System.out.println("In the else someone tried to connect");
 						DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
 						outchan.writeChars("Maximum capacity please try again later\n");
 						client.close();
-					}else{
-						JouerClient jc = new JouerClient(ids,client,this);
-						ids++;
-						jc.start();
 					}
 				}
-				System.out.println("ALL CONNECTED");
-				while(true){}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}			
 		}
+	}
+	
+	public void gameRun(){
+		new Thread(){
+			public void run(){
+				for(int i = 0 ; i < 5 ; i++){
+					System.out.println("kaka");
+				}
+			}
+		}.run();;
 	}
 	
 }
