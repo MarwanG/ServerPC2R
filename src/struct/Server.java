@@ -1,9 +1,7 @@
 package struct;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -23,7 +21,7 @@ public class Server extends Thread {
 	int ids = 0;
 
 	public Server(){
-		this(Config.nbJouer,Config.port);
+		this(Config.nbJouer,Config.port);	
 	}
 	
 	public Server(int c , int port){
@@ -52,8 +50,9 @@ public class Server extends Thread {
 	
 	public void printToAll(String s,int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getId() != id)
+			if(players.get(i).getPlayerId() != id){
 				players.get(i).printToStream(s);
+			}
 		}
 	}
 	
@@ -61,7 +60,7 @@ public class Server extends Thread {
 		{
 			try {
 				serv = new ServerSocket(port);
-				while(true){
+				while(true && this.nbConnected < this.capacity){
 					client = serv.accept();
 					System.out.println("New connection \n");
 					if(nbConnected >= capacity){
@@ -74,6 +73,8 @@ public class Server extends Thread {
 						jc.start();
 					}
 				}
+				System.out.println("ALL CONNECTED");
+				while(true){}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}			

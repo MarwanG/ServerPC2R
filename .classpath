@@ -2,5 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/users/nfs/Etu2/2906742/prog/ServerPC2R/jar/jcommander-1.27.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

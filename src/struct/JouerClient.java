@@ -31,6 +31,7 @@ public class JouerClient extends Thread {
 	}
 	
 	public JouerClient(int id,Socket s,Server serv){
+		System.out.println("my id is = " + id);	
 		this.id = id;
 		this.s = s;
 		this.serv = serv;
@@ -54,7 +55,7 @@ public class JouerClient extends Thread {
 		this.name=s;
 	}
 	
-	public int getInt(){
+	public int getPlayerId(){
 		return id;
 	}
 	
@@ -90,6 +91,10 @@ public class JouerClient extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void setType(TypeJouer type){
+		this.type = type;
 	}
 }
 
