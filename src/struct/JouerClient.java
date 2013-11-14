@@ -41,7 +41,7 @@ public class JouerClient extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-		serv.addPlayer(this);
+		
 	}
 	
 	private void init(String s){
@@ -49,6 +49,7 @@ public class JouerClient extends Thread {
 		name.replace("/", "");
 		this.type = TypeJouer.guesser;
 		this.score = 0;
+		serv.addPlayer(this);
 	}
 	
 	public void setNom(String s){
@@ -66,15 +67,15 @@ public class JouerClient extends Thread {
 				if(command.equals("EXIT/"+name+"/")) { 
 					//TODO if is the drawer;
 					outchan.writeChars("Déconnexion de \""+name+"\" \n");
-					serv.printToAll("EXITED/"+name+"/\n", id);
+					serv.printToExcept("EXITED/"+name+"/\n", id);
 					break;
 					} 
 				if(command.contains("CONNECT/")){
 					init(command.split("/")[1]);
 					outchan.writeChars("Nouvelle connexion de \""+ name +"\" \n");
-					serv.printToAll("CONNECTED/"+name+"/\n",id);
+					serv.printToExcept("CONNECTED/"+name+"/\n",id);
 				}else{
-					serv.printToAll(name +" : "+command + "\n",id);
+					serv.printToExcept(name +" : "+command + "\n",id);
 				}
 			}
 			s.close();
@@ -87,7 +88,9 @@ public class JouerClient extends Thread {
 	
 	public void printToStream(String s){
 		try {
-			outchan.writeChars(s);
+			synchronized(outchan){
+				outchan.writeChars(s);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,6 +99,12 @@ public class JouerClient extends Thread {
 	public void setType(TypeJouer type){
 		this.type = type;
 	}
+	
+	public TypeJouer getType(){
+		return type;
+	}
+	
+	public String getNom(){return this.name;}
 }
 
 

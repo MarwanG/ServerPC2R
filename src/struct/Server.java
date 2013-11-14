@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import tools.Config;
+import tools.Tools;
 
 public class Server extends Thread {
 
@@ -38,8 +39,13 @@ public class Server extends Thread {
 	public void addPlayer(JouerClient player){
 		this.players.add(player);
 		nbConnected++;
-		if(nbConnected == capacity)
+		System.out.println("connected equal " + nbConnected);
+		if(nbConnected == capacity){
 			complete = true;
+			gameRun();
+			System.out.println("game gona run");
+		}
+			
 	}
 	
 	public void removePlayer(int id){
@@ -52,7 +58,7 @@ public class Server extends Thread {
 		nbConnected--;
 	}
 	
-	public void printToAll(String s,int id){
+	public void printToExcept(String s,int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getPlayerId() != id){
 				players.get(i).printToStream(s);
@@ -60,33 +66,48 @@ public class Server extends Thread {
 		}
 	}
 	
+	public void printToSpecfic(String s,int pos){
+		players.get(pos).printToStream(s);
+	}
+	
+	public void printToGuessers(String s){ 
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getType() == TypeJouer.guesser){
+				//players.get(i).printToStream("GUESSER");
+				players.get(i).printToStream(s);
+			}
+		}
+	}
+	
+
+	public void printToDrawer(String s){ 
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getType() == TypeJouer.drawer){
+				players.get(i).printToStream(s);
+				//players.get(i).printToStream("DRAWER");
+			}
+		}
+	}
+	
 	public void run(){
 		{
 			try {
-				serv = new ServerSocket(port);
 				while(true){
-					if(!this.complete){
-						client = serv.accept();
-						System.out.println("New connection \n");
-						if(nbConnected >= capacity){
-							DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
-							outchan.writeChars("Maximum capacity please try again later\n");
-							client.close();
-						}else{
-							JouerClient jc = new JouerClient(ids,client,this);
-							ids++;
-							jc.start();
-						}
-					}else{
-						if(!running){
-							System.out.println("game gona run");
-							gameRun();
-						}							
-						client = serv.accept();
-						System.out.println("In the else someone tried to connect");
-						DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
-						outchan.writeChars("Maximum capacity please try again later\n");
-						client.close();
+					serv = new ServerSocket(port);
+					while(true){
+							client = serv.accept();
+							System.out.println("New connection \n");
+							if(nbConnected >= capacity || running){
+								DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
+								outchan.writeChars("Maximum capacity please try again later\n");
+								client.close();
+								if(complete)
+									break;
+							}else{
+								JouerClient jc = new JouerClient(ids,client,this);
+								ids++;
+								jc.start();
+							}
 					}
 				}
 			} catch (IOException e) {
@@ -98,11 +119,15 @@ public class Server extends Thread {
 	public void gameRun(){
 		new Thread(){
 			public void run(){
-				for(int i = 0 ; i < 5 ; i++){
-					System.out.println("kaka");
+				for(int i = 0 ; i < players.size() ; i++){
+					players.get(i).setType(TypeJouer.drawer);
+					String msg = "NEW_ROUND/dessinateur/"+Tools.randomWord()+"/ \n";
+					printToDrawer(msg);
+					printToGuessers("NEW_ROUND/chercheur/ \n"); 
+					break; //TODO THE REST OF THE GAME;
 				}
 			}
-		}.run();;
+		}.start();
 	}
 	
 }

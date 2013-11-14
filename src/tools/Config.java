@@ -1,5 +1,7 @@
 package tools;
 
+import java.util.ArrayList;
+
 import com.beust.jcommander.Parameter;
 
 public class Config {
@@ -11,7 +13,9 @@ public class Config {
 	@Parameter(names="-port",description="le port a utilise")
 	public static int port = 2013;
 	@Parameter(names="-dico",description="le dictionnaire")
-	public static String dico = null;
+	public static String dico = "words";
+	
+	public static ArrayList<String> list;
 
 	
 }
