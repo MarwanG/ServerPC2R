@@ -14,14 +14,20 @@ public class Server extends Thread {
 	ArrayList<JouerClient> players;
 	ArrayList<Socket> sockets;
 	ArrayList<DataOutputStream> streams;
+	ArrayList<JouerClient> founds;
+	JouerClient drawer;
 	ServerSocket serv;
 	Socket client;
 	int capacity;
 	int port;
 	int nbConnected;
 	int ids = 0;
+	int nbFound;
 	boolean complete = false;
 	boolean running = false;
+	boolean partie = false;
+	public Object obj = new Object();
+	String word;
 	
 	public Server(){
 		this(Config.nbJouer,Config.port);	
@@ -89,6 +95,12 @@ public class Server extends Thread {
 		}
 	}
 	
+	public void printToAll(String s){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+				players.get(i).printToStream(s);
+			}
+		}
+	
 	public void run(){
 		{
 			try {
@@ -116,18 +128,79 @@ public class Server extends Thread {
 		}
 	}
 	
+	public boolean correctWord(String w){
+		return this.word.equals(w);
+	}
+	
+	public void setPartie(boolean b){
+		partie = b;
+	}
+	
+	public boolean getPartie(){
+		return partie;
+	}
+	
+	public void add1(){
+		nbFound++;
+	}
+	
+	public int getNbFound(){
+		return nbFound;
+	}
+	
+	public void addMeToFound(JouerClient jp){
+		synchronized(founds){
+			founds.add(jp);
+		}
+	}
+	
 	public void gameRun(){
 		new Thread(){
 			public void run(){
 				for(int i = 0 ; i < players.size() ; i++){
-					players.get(i).setType(TypeJouer.drawer);
-					String msg = "NEW_ROUND/dessinateur/"+Tools.randomWord()+"/ \n";
-					printToDrawer(msg);
-					printToGuessers("NEW_ROUND/chercheur/ \n"); 
-					break; //TODO THE REST OF THE GAME;
+						founds = new ArrayList<JouerClient>();
+						partie = true;
+						players.get(i).setType(TypeJouer.drawer);
+						drawer = players.get(i);
+						word = Tools.randomWord();
+						System.out.println(word);
+						nbFound = 0;
+						String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
+						printToDrawer(msg);
+						printToGuessers("NEW_ROUND/chercheur/ \n");
+						synchronized(obj){
+							try {
+								obj.wait();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						updateScores();
+						printScore();
+						players.get(i).setType(TypeJouer.guesser);
+						System.out.println("next round");
 				}
+				System.out.println("end of partie");
 			}
 		}.start();
+	}
+
+	private void updateScores(){
+		for(int i = 0 ; i < founds.size() ; i++){
+			int sc = Math.max(10-i, 5);
+			founds.get(i).addToScore(sc);
+		}
+		if(founds.size()>0)
+			drawer.addToScore(10+(founds.size()-1));
+	}
+	
+	private void printScore(){
+		String msg = "SCORE_FOUND/";
+		for(int i = 0 ; i < players.size() ; i++){
+			msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
+		}
+		msg+="\n";
+		this.printToAll(msg);
 	}
 	
 }

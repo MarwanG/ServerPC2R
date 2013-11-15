@@ -27,7 +27,6 @@ public class JouerClient extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-		serv.addPlayer(this);
 	}
 	
 	public JouerClient(int id,Socket s,Server serv){
@@ -41,7 +40,6 @@ public class JouerClient extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-		
 	}
 	
 	private void init(String s){
@@ -74,6 +72,20 @@ public class JouerClient extends Thread {
 					init(command.split("/")[1]);
 					outchan.writeChars("Nouvelle connexion de \""+ name +"\" \n");
 					serv.printToExcept("CONNECTED/"+name+"/\n",id);
+				}
+				if(command.contains("GUESS/")){
+					String tmp = command.split("/")[1];
+					if(serv.correctWord(tmp)){
+						outchan.writeChars("WORD_FOUND/"+name+"/"+tmp+"\n");
+						serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
+						serv.add1();
+						serv.addMeToFound(this);
+						synchronized(serv.obj){
+							serv.obj.notify();
+						}
+					}else{
+						serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
+					}
 				}else{
 					serv.printToExcept(name +" : "+command + "\n",id);
 				}
@@ -96,6 +108,7 @@ public class JouerClient extends Thread {
 		}
 	}
 	
+	
 	public void setType(TypeJouer type){
 		this.type = type;
 	}
@@ -105,6 +118,10 @@ public class JouerClient extends Thread {
 	}
 	
 	public String getNom(){return this.name;}
+	
+	public void addToScore(int n){score = score+n;}
+	
+	public int getScore(){return score;}
 }
 
 
