@@ -14,6 +14,8 @@ public class Config {
 	public static int port = 2013;
 	@Parameter(names="-dico",description="le dictionnaire")
 	public static String dico = "words";
+	@Parameter(names="-tMax",description="la durée maximal pour trouver le mot")
+	public static int tMax = 180; 
 	
 	public static ArrayList<String> list;
 

@@ -16,6 +16,7 @@ public class JouerClient extends Thread {
 	TypeJouer type;
 	Server serv;
 	int id;
+	boolean connected;
 	
 	public JouerClient(String name , Socket s,TypeJouer type){
 		this.name = name;
@@ -42,62 +43,56 @@ public class JouerClient extends Thread {
 		} 
 	}
 	
+	//init function called when user actually connects. cmd: CONNECT/
 	private void init(String s){
 		this.name = s;
 		name.replace("/", "");
 		this.type = TypeJouer.guesser;
 		this.score = 0;
+		connected = true;
 		serv.addPlayer(this);
 	}
 	
-	public void setNom(String s){
-		this.name=s;
-	}
-	
-	public int getPlayerId(){
-		return id;
-	}
-	
+	//fonction run of the thread.
 	public void run(){
 		try {
 			while (true) {
-				String command = inchan.readLine();
-				if(command.equals("EXIT/"+name+"/")) { 
-					//TODO if is the drawer;
-					outchan.writeChars("Déconnexion de \""+name+"\" \n");
-					serv.printToExcept("EXITED/"+name+"/\n", id);
-					break;
+					String command = inchan.readLine();
+					if(command.equals("EXIT") && name==null){
+						break;
+					}
+					if(command.equals("EXIT/"+name+"/")) { 
+						serv.printToExcept("EXITED/"+name+"/\n", id);
+						break;
 					} 
-				if(command.contains("CONNECT/")){
-					init(command.split("/")[1]);
-					outchan.writeChars("Nouvelle connexion de \""+ name +"\" \n");
-					serv.printToExcept("CONNECTED/"+name+"/\n",id);
-				}
-				if(command.contains("GUESS/")){
-					String tmp = command.split("/")[1];
-					if(serv.correctWord(tmp)){
-						outchan.writeChars("WORD_FOUND/"+name+"/"+tmp+"\n");
-						serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
-						serv.add1();
-						serv.addMeToFound(this);
-						synchronized(serv.obj){
-							serv.obj.notify();
+					if(command.contains("CONNECT/")){
+						init(command.split("/")[1]);
+						serv.printToExcept("CONNECTED/"+name+"/\n",id);
+					}
+					else if(command.contains("GUESS/") && type==TypeJouer.guesser){
+						String tmp = command.split("/")[1];
+						if(serv.correctWord(tmp,this)){
+							printToStream("WORD_FOUND/"+name+"/"+tmp+"\n");
+							serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
+						}else{
+							serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
 						}
 					}else{
-						serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
+						System.out.println("chat shit");
+						System.out.println(command);
+						serv.printToExcept(name +" : "+command + "\n",id);
 					}
-				}else{
-					serv.printToExcept(name +" : "+command + "\n",id);
-				}
 			}
+			System.out.println("arrived here");
 			s.close();
 			serv.removePlayer(id);
-		}catch(IOException e) { 
+		}catch(IOException e){ 
 			e.printStackTrace(); 
 			System.exit(1);
-			} 
+		} 
 	}
 	
+	//function for print to DataOutputStream
 	public void printToStream(String s){
 		try {
 			synchronized(outchan){
@@ -109,6 +104,22 @@ public class JouerClient extends Thread {
 	}
 	
 	
+	
+	public void addToScore(int n){
+		score = score+n;
+	}
+	
+	
+	public void disconnect(){
+		try {
+			s.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	//SETTERS AND GETTERS
 	public void setType(TypeJouer type){
 		this.type = type;
 	}
@@ -117,11 +128,27 @@ public class JouerClient extends Thread {
 		return type;
 	}
 	
-	public String getNom(){return this.name;}
 	
-	public void addToScore(int n){score = score+n;}
+	public void setNom(String s){
+		this.name=s;
+	}
 	
-	public int getScore(){return score;}
+	public String getNom(){
+		return this.name;
+	}
+		
+	public int getPlayerId(){
+		return id;
+	}
+	
+	public boolean getConnect(){
+		return connected;
+	}
+	
+	public int getScore(){
+		return score;
+	}
+	
 }
 
 

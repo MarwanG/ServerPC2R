@@ -42,65 +42,8 @@ public class Server extends Thread {
 		streams = new ArrayList<DataOutputStream>();
 	}
 	
-	public void addPlayer(JouerClient player){
-		this.players.add(player);
-		nbConnected++;
-		System.out.println("connected equal " + nbConnected);
-		if(nbConnected == capacity){
-			complete = true;
-			gameRun();
-			System.out.println("game gona run");
-		}
-			
-	}
-	
-	public void removePlayer(int id){
-		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getId() == id){
-				players.remove(i);
-				break;
-			}
-		}
-		nbConnected--;
-	}
-	
-	public void printToExcept(String s,int id){
-		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getPlayerId() != id){
-				players.get(i).printToStream(s);
-			}
-		}
-	}
-	
-	public void printToSpecfic(String s,int pos){
-		players.get(pos).printToStream(s);
-	}
-	
-	public void printToGuessers(String s){ 
-		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getType() == TypeJouer.guesser){
-				//players.get(i).printToStream("GUESSER");
-				players.get(i).printToStream(s);
-			}
-		}
-	}
-	
 
-	public void printToDrawer(String s){ 
-		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getType() == TypeJouer.drawer){
-				players.get(i).printToStream(s);
-				//players.get(i).printToStream("DRAWER");
-			}
-		}
-	}
-	
-	public void printToAll(String s){
-		for(int i = 0 ; i < this.nbConnected ; i++){
-				players.get(i).printToStream(s);
-			}
-		}
-	
+	//run function for thread
 	public void run(){
 		{
 			try {
@@ -108,7 +51,7 @@ public class Server extends Thread {
 					serv = new ServerSocket(port);
 					while(true){
 							client = serv.accept();
-							System.out.println("New connection \n");
+							System.out.println("New connection");
 							if(nbConnected >= capacity || running){
 								DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
 								outchan.writeChars("Maximum capacity please try again later\n");
@@ -128,8 +71,92 @@ public class Server extends Thread {
 		}
 	}
 	
-	public boolean correctWord(String w){
-		return this.word.equals(w);
+	//thread to start a game.
+	public void gameRun(){	
+		new Thread(){
+			public void run(){
+				for(int i = 0 ; i < players.size() ; i++){
+					startNewPartie(i);	
+					synchronized(obj){
+							try {
+								obj.wait();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						if(founds.size() > 0){
+							printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
+							try {
+								Thread.sleep(Config.timeSec * 1000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						endPartie(i);
+						System.out.println("next round");
+				}
+				System.out.println("end of partie");
+				disconnectAll();
+			}
+		}.start();
+	}
+	
+	
+	
+	
+	//PRINT FUNCTIONS.
+	
+	//prints to add except user with the id;
+	public void printToExcept(String s,int id){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getPlayerId() != id){
+				players.get(i).printToStream(s);
+			}
+		}
+	}
+	
+	//print to certain player.
+	public void printToSpecfic(String s,int pos){
+		players.get(pos).printToStream(s);
+	}
+	
+	
+	//print to guessers.
+	public void printToGuessers(String s){ 
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getType() == TypeJouer.guesser){
+				players.get(i).printToStream(s);
+			}
+		}
+	}
+	
+	//print to drawer
+	public void printToDrawer(String s){ 
+		drawer.printToStream(s);
+	}
+	
+	//prints to all
+	public void printToAll(String s){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+				players.get(i).printToStream(s);
+			}
+		}
+	
+	
+	
+	public boolean correctWord(String w,JouerClient jc){
+		if(this.word.equals(w)){
+			nbFound++;
+			synchronized(founds){
+				founds.add(jc);
+			}
+			synchronized(obj){
+				obj.notify();
+			}
+			return true;
+		}else{
+			return false;
+		}
 	}
 	
 	public void setPartie(boolean b){
@@ -140,49 +167,52 @@ public class Server extends Thread {
 		return partie;
 	}
 	
-	public void add1(){
-		nbFound++;
-	}
-	
 	public int getNbFound(){
 		return nbFound;
 	}
 	
-	public void addMeToFound(JouerClient jp){
-		synchronized(founds){
-			founds.add(jp);
-		}
+	
+	private void startNewPartie(int i){
+		runTimer();
+		founds = new ArrayList<JouerClient>();
+		partie = true;
+		players.get(i).setType(TypeJouer.drawer);
+		drawer = players.get(i);
+		word = Tools.randomWord();
+		System.out.println(word);
+		nbFound = 0;
+		String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
+		printToDrawer(msg);
+		printToGuessers("NEW_ROUND/chercheur/ \n");
+		
 	}
 	
-	public void gameRun(){
+	private void endPartie(int i){
+		updateScores();
+		printScore();
+		players.get(i).setType(TypeJouer.guesser);
+	}
+	
+	private void runTimer(){
 		new Thread(){
 			public void run(){
-				for(int i = 0 ; i < players.size() ; i++){
-						founds = new ArrayList<JouerClient>();
-						partie = true;
-						players.get(i).setType(TypeJouer.drawer);
-						drawer = players.get(i);
-						word = Tools.randomWord();
-						System.out.println(word);
-						nbFound = 0;
-						String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
-						printToDrawer(msg);
-						printToGuessers("NEW_ROUND/chercheur/ \n");
-						synchronized(obj){
-							try {
-								obj.wait();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						updateScores();
-						printScore();
-						players.get(i).setType(TypeJouer.guesser);
-						System.out.println("next round");
+				try {
+					System.out.println("timer just started");
+					Thread.sleep(Config.tMax * 1000);
+					System.out.println("i am done");
+					synchronized(obj){
+						obj.notify();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-				System.out.println("end of partie");
 			}
 		}.start();
+	}
+	
+	private void disconnectAll(){
+		for(int i = 0 ; i < players.size() ; i++)
+			players.get(i).disconnect();
 	}
 
 	private void updateScores(){
@@ -202,5 +232,30 @@ public class Server extends Thread {
 		msg+="\n";
 		this.printToAll(msg);
 	}
+	
+	//ADD PLAYER.
+	public void addPlayer(JouerClient player){
+		this.players.add(player);
+		nbConnected++;
+		System.out.println("connected equal " + nbConnected);
+		if(nbConnected == capacity){
+			complete = true;
+			gameRun();
+			System.out.println("game gona run");
+		}
+			
+	}
+		
+	//REMOVE PLAYER
+	public void removePlayer(int id){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getId() == id){
+				players.remove(i);
+				break;
+			}
+		}
+		nbConnected--;
+	}
+	
 	
 }
