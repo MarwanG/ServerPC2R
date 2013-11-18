@@ -77,6 +77,16 @@ public class JouerClient extends Thread {
 						}else{
 							serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
 						}
+					}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
+						serv.cheating();
+					}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer){
+						serv.printToGuessers(command);
+					}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer){
+						serv.printToGuessers(command);
+					}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer){
+						serv.printToGuessers(command);
+					}else if(command.contains("LINE/") && type==TypeJouer.drawer){
+						serv.printToGuessers(command);
 					}else{
 						System.out.println("chat shit");
 						System.out.println(command);

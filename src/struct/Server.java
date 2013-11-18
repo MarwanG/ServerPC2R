@@ -28,6 +28,9 @@ public class Server extends Thread {
 	boolean partie = false;
 	public Object obj = new Object();
 	String word;
+	int nbCheat = 0;
+	
+	Thread game;
 	
 	public Server(){
 		this(Config.nbJouer,Config.port);	
@@ -73,7 +76,7 @@ public class Server extends Thread {
 	
 	//thread to start a game.
 	public void gameRun(){	
-		new Thread(){
+		game = new Thread(){
 			public void run(){
 				for(int i = 0 ; i < players.size() ; i++){
 					startNewPartie(i);	
@@ -83,6 +86,9 @@ public class Server extends Thread {
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
+						}
+						if(nbCheat >= 3){
+							printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
 						}
 						if(founds.size() > 0){
 							printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
@@ -98,13 +104,117 @@ public class Server extends Thread {
 				System.out.println("end of partie");
 				disconnectAll();
 			}
-		}.start();
+		};
+		game.start();
 	}
 	
 	
+	//UTILS FOR RUNNING A GAME
+
+
+	//starts a party	
+	private void startNewPartie(int i){
+		runTimer();
+		founds = new ArrayList<JouerClient>();
+		partie = true;
+		players.get(i).setType(TypeJouer.drawer);
+		drawer = players.get(i);
+		word = Tools.randomWord();
+		System.out.println(word);
+		nbFound = 0;
+		nbCheat = 0;
+		String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
+		printToDrawer(msg);
+		printToGuessers("NEW_ROUND/chercheur/ \n");
+		
+	}
+	
+	//ends a party
+	private void endPartie(int i){
+		updateScores();
+		if(founds.size() > 0)
+			printToAll("END_ROUND/"+founds.get(0).getNom()+"/"+word + "\n");
+		else
+			printToAll("END_ROUND/"+word+"\n");
+		printScore();
+		players.get(i).setType(TypeJouer.guesser);
+	}
+	
+	//timer to count global time and end after Config.tMax mins
+	private void runTimer(){
+		new Thread(){
+			public void run(){
+				try {
+					System.out.println("timer just started");
+					Thread.sleep(Config.tMax * 1000);
+					System.out.println("i am done");
+					synchronized(obj){
+						obj.notify();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}.start();
+	}
+	
+	//disconnects everyone
+	private void disconnectAll(){
+		for(int i = 0 ; i < players.size() ; i++)
+			players.get(i).disconnect();
+	}
+
+	//updates scores
+	private void updateScores(){
+		for(int i = 0 ; i < founds.size() ; i++){
+			int sc = Math.max(10-i, 5);
+			founds.get(i).addToScore(sc);
+		}
+		if(founds.size()>0)
+			drawer.addToScore(10+(founds.size()-1));
+	}
+	
+	//to declare cheating and end partie if there is more than 3.
+	public void cheating(){
+		nbCheat++;
+		if(nbCheat >= 3){
+			synchronized(obj){
+				obj.notify();
+			}
+		}
+	}
+	
+	//test if guessed word is correct.
+	public boolean correctWord(String w,JouerClient jc){
+		if(this.word.equals(w)){
+			nbFound++;
+			synchronized(founds){
+				founds.add(jc);
+			}
+			synchronized(obj){
+				obj.notify();
+			}
+			if(founds.size() == players.size()-1){
+				game.interrupt();
+			}
+			return true;
+		}else{
+			return false;
+		}
+	}
 	
 	
 	//PRINT FUNCTIONS.
+	
+	//prints the current score to everyone.
+	private void printScore(){
+		String msg = "SCORE_FOUND/";
+		for(int i = 0 ; i < players.size() ; i++){
+			msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
+		}
+		msg+="\n";
+		this.printToAll(msg);
+	}
 	
 	//prints to add except user with the id;
 	public void printToExcept(String s,int id){
@@ -144,21 +254,6 @@ public class Server extends Thread {
 	
 	
 	
-	public boolean correctWord(String w,JouerClient jc){
-		if(this.word.equals(w)){
-			nbFound++;
-			synchronized(founds){
-				founds.add(jc);
-			}
-			synchronized(obj){
-				obj.notify();
-			}
-			return true;
-		}else{
-			return false;
-		}
-	}
-	
 	public void setPartie(boolean b){
 		partie = b;
 	}
@@ -172,66 +267,12 @@ public class Server extends Thread {
 	}
 	
 	
-	private void startNewPartie(int i){
-		runTimer();
-		founds = new ArrayList<JouerClient>();
-		partie = true;
-		players.get(i).setType(TypeJouer.drawer);
-		drawer = players.get(i);
-		word = Tools.randomWord();
-		System.out.println(word);
-		nbFound = 0;
-		String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
-		printToDrawer(msg);
-		printToGuessers("NEW_ROUND/chercheur/ \n");
-		
-	}
 	
-	private void endPartie(int i){
-		updateScores();
-		printScore();
-		players.get(i).setType(TypeJouer.guesser);
-	}
 	
-	private void runTimer(){
-		new Thread(){
-			public void run(){
-				try {
-					System.out.println("timer just started");
-					Thread.sleep(Config.tMax * 1000);
-					System.out.println("i am done");
-					synchronized(obj){
-						obj.notify();
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}.start();
-	}
 	
-	private void disconnectAll(){
-		for(int i = 0 ; i < players.size() ; i++)
-			players.get(i).disconnect();
-	}
-
-	private void updateScores(){
-		for(int i = 0 ; i < founds.size() ; i++){
-			int sc = Math.max(10-i, 5);
-			founds.get(i).addToScore(sc);
-		}
-		if(founds.size()>0)
-			drawer.addToScore(10+(founds.size()-1));
-	}
 	
-	private void printScore(){
-		String msg = "SCORE_FOUND/";
-		for(int i = 0 ; i < players.size() ; i++){
-			msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
-		}
-		msg+="\n";
-		this.printToAll(msg);
-	}
+	
+	//ADDERS AND REMOVERS OF PLAYERS
 	
 	//ADD PLAYER.
 	public void addPlayer(JouerClient player){
