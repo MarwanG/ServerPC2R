@@ -102,6 +102,7 @@ public class Server extends Thread {
 						System.out.println("next round");
 				}
 				System.out.println("end of partie");
+				running = false;
 				disconnectAll();
 			}
 		};
@@ -252,26 +253,6 @@ public class Server extends Thread {
 			}
 		}
 	
-	
-	
-	public void setPartie(boolean b){
-		partie = b;
-	}
-	
-	public boolean getPartie(){
-		return partie;
-	}
-	
-	public int getNbFound(){
-		return nbFound;
-	}
-	
-	
-	
-	
-	
-	
-	
 	//ADDERS AND REMOVERS OF PLAYERS
 	
 	//ADD PLAYER.
@@ -290,13 +271,34 @@ public class Server extends Thread {
 	//REMOVE PLAYER
 	public void removePlayer(int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
-			if(players.get(i).getId() == id){
+			System.out.println(i);
+			if(players.get(i).getPlayerId() == id){
 				players.remove(i);
 				break;
 			}
 		}
 		nbConnected--;
+		if(drawer.getPlayerId() == id){
+			synchronized(obj){
+				obj.notify();
+			}
+		}
+		if(nbConnected == 1){
+			synchronized(obj){
+				obj.notify();
+			}
+		}
 	}
 	
+	public void setPartie(boolean b){
+		partie = b;
+	}
 	
+	public boolean getPartie(){
+		return partie;
+	}
+	
+	public int getNbFound(){
+		return nbFound;
+	}	
 }

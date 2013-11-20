@@ -16,7 +16,7 @@ public class JouerClient extends Thread {
 	TypeJouer type;
 	Server serv;
 	int id;
-	boolean connected;
+	boolean guessed;
 	
 	public JouerClient(String name , Socket s,TypeJouer type){
 		this.name = name;
@@ -49,7 +49,7 @@ public class JouerClient extends Thread {
 		name.replace("/", "");
 		this.type = TypeJouer.guesser;
 		this.score = 0;
-		connected = true;
+		guessed = false;
 		serv.addPlayer(this);
 	}
 	
@@ -61,39 +61,37 @@ public class JouerClient extends Thread {
 					if(command.equals("EXIT") && name==null){
 						break;
 					}
-					if(command.equals("EXIT/"+name+"/")) { 
-						serv.printToExcept("EXITED/"+name+"/\n", id);
-						break;
-					} 
-					if(command.contains("CONNECT/")){
-						init(command.split("/")[1]);
-						serv.printToExcept("CONNECTED/"+name+"/\n",id);
-					}
-					else if(command.contains("GUESS/") && type==TypeJouer.guesser){
-						String tmp = command.split("/")[1];
-						if(serv.correctWord(tmp,this)){
-							printToStream("WORD_FOUND/"+name+"/"+tmp+"\n");
-							serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
-						}else{
-							serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
+					if(command.endsWith("/")){
+						if(command.contains("EXIT/"+name)) { 
+							serv.printToExcept("EXITED/"+name+"/\n", id);
+							break;
+						} 
+						if(command.contains("CONNECT/")){
+							init(command.split("/")[1]);
+							serv.printToAll("CONNECTED/"+name+"/\n");
+						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
+							serv.cheating();
+						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
+								String tmp = command.split("/")[1];
+								if(serv.correctWord(tmp,this)){
+									printToStream("WORD_FOUND/"+name+"/"+tmp+"\n");
+									serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
+								}else{
+									serv.printToExcept("GUESSED/"+tmp+"/"+name+"/ \n", id);
+								}
+						}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer){
+							serv.printToGuessers(command);
+						}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer){
+							serv.printToGuessers(command);
+						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer){
+							serv.printToGuessers(command);
+						}else if(command.contains("LINE/") && type==TypeJouer.drawer){
+							serv.printToGuessers(command);
+						}else if(command.contains("TALK/")){
+							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n", id);
 						}
-					}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
-						serv.cheating();
-					}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer){
-						serv.printToGuessers(command);
-					}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer){
-						serv.printToGuessers(command);
-					}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer){
-						serv.printToGuessers(command);
-					}else if(command.contains("LINE/") && type==TypeJouer.drawer){
-						serv.printToGuessers(command);
-					}else{
-						System.out.println("chat shit");
-						System.out.println(command);
-						serv.printToExcept(name +" : "+command + "\n",id);
 					}
-			}
-			System.out.println("arrived here");
+				}
 			s.close();
 			serv.removePlayer(id);
 		}catch(IOException e){ 
@@ -122,6 +120,7 @@ public class JouerClient extends Thread {
 	
 	public void disconnect(){
 		try {
+			//inchan.close(); NOT SURE WHAT TO DO
 			s.close();
 		}catch (IOException e) {
 			e.printStackTrace();
@@ -151,9 +150,6 @@ public class JouerClient extends Thread {
 		return id;
 	}
 	
-	public boolean getConnect(){
-		return connected;
-	}
 	
 	public int getScore(){
 		return score;
