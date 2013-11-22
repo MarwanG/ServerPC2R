@@ -273,16 +273,22 @@ public class Server extends Thread {
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			System.out.println(i);
 			if(players.get(i).getPlayerId() == id){
+				printToExcept("EXITED/"+players.get(i).getNom()+"/\n", id);
 				players.remove(i);
 				break;
 			}
 		}
-		nbConnected--;
-		if(drawer.getPlayerId() == id){
-			synchronized(obj){
-				obj.notify();
+		if(nbConnected > 0)
+			nbConnected--;
+		
+		
+		if(drawer != null){
+			if(drawer.getPlayerId() == id){
+				synchronized(obj){
+					obj.notify();
+				}
 			}
-		}
+		}	
 		if(nbConnected == 1){
 			synchronized(obj){
 				obj.notify();

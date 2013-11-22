@@ -17,6 +17,7 @@ public class JouerClient extends Thread {
 	Server serv;
 	int id;
 	boolean guessed;
+	boolean connected;
 	
 	public JouerClient(String name , Socket s,TypeJouer type){
 		this.name = name;
@@ -35,6 +36,7 @@ public class JouerClient extends Thread {
 		this.id = id;
 		this.s = s;
 		this.serv = serv;
+		this.connected = false;
 		try {
 			inchan = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			outchan = new DataOutputStream(s.getOutputStream());
@@ -51,6 +53,7 @@ public class JouerClient extends Thread {
 		this.score = 0;
 		guessed = false;
 		serv.addPlayer(this);
+		connected = true;
 	}
 	
 	//fonction run of the thread.
@@ -58,17 +61,16 @@ public class JouerClient extends Thread {
 		try {
 			while (true) {
 					String command = inchan.readLine();
-					if(command.equals("EXIT") && name==null){
+					if(command == null){
 						break;
 					}
 					if(command.endsWith("/")){
 						if(command.contains("EXIT/"+name)) { 
-							serv.printToExcept("EXITED/"+name+"/\n", id);
 							break;
 						} 
-						if(command.contains("CONNECT/")){
+						if(command.contains("CONNECT/") && !connected){
 							init(command.split("/")[1]);
-							serv.printToAll("CONNECTED/"+name+"/\n");
+							serv.printToAll("CONNECTED/"+name+"/ \n");
 						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
 							serv.cheating();
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
@@ -93,7 +95,8 @@ public class JouerClient extends Thread {
 					}
 				}
 			s.close();
-			serv.removePlayer(id);
+			if(connected)
+				serv.removePlayer(id);
 		}catch(IOException e){ 
 			e.printStackTrace(); 
 			System.exit(1);
@@ -110,13 +113,6 @@ public class JouerClient extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	
-	
-	public void addToScore(int n){
-		score = score+n;
-	}
-	
 	
 	public void disconnect(){
 		try {
@@ -154,6 +150,12 @@ public class JouerClient extends Thread {
 	public int getScore(){
 		return score;
 	}
+	
+	public void addToScore(int n){
+		score = score+n;
+	}
+	
+	
 	
 }
 
