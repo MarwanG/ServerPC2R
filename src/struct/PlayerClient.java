@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.Socket;
 
+import tools.Config;
 import tools.Profiles;
 import tools.Tools;
 
@@ -75,14 +76,12 @@ public class PlayerClient extends Thread {
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
 								String word = command.split("/")[1];
 								guess(word);						
-						}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command+"\n");
-						}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command+"\n");
-						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command+"\n");
-						}else if(command.contains("LINE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command+"\n");
+						}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer && command.split("/").length >3){
+								Tools.changeColor(command);
+						}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer && command.split("/").length > 1){
+								Config.size = Integer.valueOf(command.split("/")[1]);
+						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer && command.split("/").length > 4){
+								sendDrawing(command);
 						}else if(command.contains("TALK/")){
 							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n", id);
 						}
@@ -96,7 +95,7 @@ public class PlayerClient extends Thread {
 			System.exit(1);
 		} 
 	}
-	
+
 	//function for print to DataOutputStream
 	public void printToStream(String s){
 		try {
@@ -145,6 +144,22 @@ public class PlayerClient extends Thread {
 		}
 	}
 	
+	
+
+
+	private void sendDrawing(String command) {
+		String[] points = command.split("/");
+		String line = "LINE/";
+		for(int i = 1 ; i < points.length ; i++){
+			line+=points[i]+"/";
+		}
+		for(int i = 0 ; i < Config.rgb.length ; i++){
+			line+=Config.rgb[i]+"/";
+		}
+		line+=Config.size + "/ \n";
+		serv.printToGuessers(line);
+	}
+	
 	private void guess(String word){
 		if(serv.correctWord(word,this)){
 			printToStream("WORD_FOUND/"+name+"/"+word+"\n");
@@ -154,7 +169,7 @@ public class PlayerClient extends Thread {
 			serv.printToExcept("GUESSED/"+word+"/"+name+"/ \n", id);
 		}
 	}
-	
+		
 	//SETTERS AND GETTERS
 	public void setType(TypeJouer type){
 		this.type = type;

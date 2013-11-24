@@ -20,8 +20,12 @@ public class Config {
 	@Parameter(names="-tMax",description="la durée maximal pour trouver le mot")
 	public static int tMax = 180; 		//normally 180 for test reasons 40
 	
-	public static ArrayList<String> list;	//Dictionary.
+	public static ArrayList<String> list;//Dictionary.
 
-	public static ArrayList<Player> comptes;			//list of accounts
+	public static ArrayList<Player> comptes;//list of accounts
+	
+	public static int [] rgb = {0,0,0};		//default rgb color black
+	
+	public static int size = 1;
 	
 }

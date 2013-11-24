@@ -43,7 +43,13 @@ public class Tools {
 		return Config.list.get(n);
 	}
 
-	
+	public static void changeColor(String cmd){
+		String [] split = cmd.split("/");
+		for(int i = 0 ; i < 3 ;i++){
+			Config.rgb[i] = Integer.valueOf(split[i+1]);
+		}
+		
+	}
 	
 
 }
