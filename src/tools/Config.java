@@ -2,6 +2,9 @@ package tools;
 
 import java.util.ArrayList;
 
+import struct.Player;
+import struct.PlayerClient;
+
 import com.beust.jcommander.Parameter;
 
 public class Config {
@@ -17,7 +20,8 @@ public class Config {
 	@Parameter(names="-tMax",description="la durée maximal pour trouver le mot")
 	public static int tMax = 180; 		//normally 180 for test reasons 40
 	
-	public static ArrayList<String> list;
+	public static ArrayList<String> list;	//Dictionary.
 
+	public static ArrayList<Player> comptes;			//list of accounts
 	
 }

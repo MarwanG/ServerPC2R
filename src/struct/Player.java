@@ -45,8 +45,8 @@ public class Player implements Serializable{
 	
 	private void writeObject(ObjectOutputStream stream) throws IOException {
 		
-		name = Encryption.encode("thisisencrypt/"+name+"/makeitharder");
-		password = Encryption.encode("thisisencrypt/"+password+"/makeitharder");
+		name = Encryption.encode(name);
+		password = Encryption.encode(password);
 		stream.defaultWriteObject();
 	}
 	
@@ -54,7 +54,5 @@ public class Player implements Serializable{
 		stream.defaultReadObject();
 		name = Encryption.decode(name);
 		password = Encryption.decode(password);
-		name = name.split("/")[1];
-		password= password.split("/")[1];
 	}
 }

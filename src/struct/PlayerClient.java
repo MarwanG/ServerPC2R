@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.Socket;
 
+import tools.Profiles;
 import tools.Tools;
 
 public class PlayerClient extends Thread {
@@ -24,7 +25,6 @@ public class PlayerClient extends Thread {
 	boolean connected;
 	
 	public PlayerClient(int id,Socket s,Server serv){
-		System.out.println("my id is = " + id);	
 		this.id = id;
 		this.s = s;
 		this.serv = serv;
@@ -59,11 +59,11 @@ public class PlayerClient extends Thread {
 					if(command.endsWith("/")){
 						if(command.contains("EXIT/"+name)) { 
 							break;
-						}else if(command.contains("REGISTER/") && !connected){
+						}else if(command.contains("REGISTER/") && !connected && command.split("/").length > 2){
 							if(!register(command.split("/")[1],command.split("/")[2])){
 								break;
 							}
-						}else if(command.contains("LOGIN/") && !connected){
+						}else if(command.contains("LOGIN/") && !connected  && command.split("/").length > 2){
 							if(!login(command.split("/")[1],command.split("/")[2])){
 								break;
 							}
@@ -76,13 +76,13 @@ public class PlayerClient extends Thread {
 								String word = command.split("/")[1];
 								guess(word);						
 						}else if(command.contains("SET_COLOR/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command);
+							serv.printToGuessers(command+"\n");
 						}else if(command.contains("SET_SIZE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command);
+							serv.printToGuessers(command+"\n");
 						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command);
+							serv.printToGuessers(command+"\n");
 						}else if(command.contains("LINE/") && type==TypeJouer.drawer){
-							serv.printToGuessers(command);
+							serv.printToGuessers(command+"\n");
 						}else if(command.contains("TALK/")){
 							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n", id);
 						}
@@ -120,10 +120,10 @@ public class PlayerClient extends Thread {
 	
 	
 	private boolean register(String name,String password){
-		if(!Tools.nameExists(name)){
+		if(!Profiles.nameExists(name)){
 			init(name);
 			p = new Player(name,password);
-			Tools.addPlayer(p);
+			Profiles.addPlayer(p);
 			serv.printToAll("CONNECTED/"+name+"/ \n");
 			return true;
 		}else{
@@ -133,7 +133,7 @@ public class PlayerClient extends Thread {
 	}
 	
 	private boolean login(String name,String password){
-		Player tmp = Tools.playerExists(name, password);
+		Player tmp = Profiles.playerExists(name, password);
 		if(tmp == null){
 			printToStream("ACCESSDENIED/ \n");
 			return false;

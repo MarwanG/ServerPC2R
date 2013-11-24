@@ -11,11 +11,11 @@ import tools.Tools;
 
 public class Server extends Thread {
 
-	ArrayList<JouerClient> players;
+	ArrayList<PlayerClient> players;
 	ArrayList<Socket> sockets;
 	ArrayList<DataOutputStream> streams;
-	ArrayList<JouerClient> founds;
-	JouerClient drawer;
+	ArrayList<PlayerClient> founds;
+	PlayerClient drawer;
 	ServerSocket serv;
 	Socket client;
 	int capacity;
@@ -40,7 +40,7 @@ public class Server extends Thread {
 		this.capacity = c;
 		this.port = port;
 		nbConnected = 0;
-		players = new ArrayList<JouerClient>();
+		players = new ArrayList<PlayerClient>();
 		sockets = new ArrayList<Socket>();
 		streams = new ArrayList<DataOutputStream>();
 	}
@@ -62,7 +62,7 @@ public class Server extends Thread {
 								if(complete)
 									break;
 							}else{
-								JouerClient jc = new JouerClient(ids,client,this);
+								PlayerClient jc = new PlayerClient(ids,client,this);
 								ids++;
 								jc.start();
 							}
@@ -116,18 +116,16 @@ public class Server extends Thread {
 	//starts a party	
 	private void startNewPartie(int i){
 		runTimer();
-		founds = new ArrayList<JouerClient>();
+		founds = new ArrayList<PlayerClient>();
 		partie = true;
 		players.get(i).setType(TypeJouer.drawer);
 		drawer = players.get(i);
 		word = Tools.randomWord();
-		System.out.println(word);
 		nbFound = 0;
 		nbCheat = 0;
 		String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
 		printToDrawer(msg);
-		printToGuessers("NEW_ROUND/chercheur/ \n");
-		
+		printToGuessers("NEW_ROUND/chercheur/ \n");		
 	}
 	
 	//ends a party
@@ -146,9 +144,7 @@ public class Server extends Thread {
 		new Thread(){
 			public void run(){
 				try {
-					System.out.println("timer just started");
 					Thread.sleep(Config.tMax * 1000);
-					System.out.println("i am done");
 					synchronized(obj){
 						obj.notify();
 					}
@@ -186,7 +182,7 @@ public class Server extends Thread {
 	}
 	
 	//test if guessed word is correct.
-	public boolean correctWord(String w,JouerClient jc){
+	public boolean correctWord(String w,PlayerClient jc){
 		if(this.word.equals(w)){
 			nbFound++;
 			synchronized(founds){
@@ -256,14 +252,14 @@ public class Server extends Thread {
 	//ADDERS AND REMOVERS OF PLAYERS
 	
 	//ADD PLAYER.
-	public void addPlayer(JouerClient player){
+	public void addPlayer(PlayerClient player){
 		this.players.add(player);
 		nbConnected++;
-		System.out.println("connected equal " + nbConnected);
+		System.out.println("nbConnected = " + nbConnected);
 		if(nbConnected == capacity){
 			complete = true;
 			gameRun();
-			System.out.println("game gona run");
+			System.out.println("A new game will run");
 		}
 			
 	}
@@ -271,7 +267,6 @@ public class Server extends Thread {
 	//REMOVE PLAYER
 	public void removePlayer(int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
-			System.out.println(i);
 			if(players.get(i).getPlayerId() == id){
 				printToExcept("EXITED/"+players.get(i).getNom()+"/\n", id);
 				players.remove(i);
