@@ -79,6 +79,7 @@ public class Server extends Thread {
 		game = new Thread(){
 			public void run(){
 				for(int i = 0 ; i < players.size() ; i++){
+					System.out.println("Game nb : " + i);
 					startNewPartie(i);	
 					synchronized(obj){
 							try {
@@ -137,6 +138,9 @@ public class Server extends Thread {
 			printToAll("END_ROUND/"+word+"\n");
 		printScore();
 		players.get(i).setType(TypeJouer.guesser);
+		for(int z = 0 ; z < players.size() ; z++){
+			players.get(z).setGuessed(false);
+		}
 	}
 	
 	//timer to count global time and end after Config.tMax mins

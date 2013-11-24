@@ -203,6 +203,10 @@ public class PlayerClient extends Thread {
 	
 	public String toString(){
 		return "id = "+id + " name = " + this.name;
+	}
+
+	public void setGuessed(boolean b) {
+		guessed = b;	
 	}	
 }
 

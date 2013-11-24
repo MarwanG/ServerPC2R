@@ -39,7 +39,6 @@ public class Tools {
 	public static String randomWord(){
 		double f = Math.random()*Config.list.size();
 		int n = (int)f;
-		System.out.println("random n = " + n + " f = " + f);
 		return Config.list.get(n);
 	}
 
