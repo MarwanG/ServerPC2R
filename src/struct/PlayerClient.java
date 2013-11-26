@@ -100,7 +100,8 @@ public class PlayerClient extends Thread {
 	public void printToStream(String s){
 		try {
 			synchronized(outchan){
-				outchan.writeChars(s);
+				//outchan.writeChars(s);
+				outchan.writeUTF(s);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
