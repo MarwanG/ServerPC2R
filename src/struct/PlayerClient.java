@@ -24,6 +24,7 @@ public class PlayerClient extends Thread {
 	int id;
 	boolean guessed;
 	boolean connected;
+	Game game;
 	
 	public PlayerClient(int id,Socket s,Server serv){
 		this.id = id;
@@ -55,10 +56,18 @@ public class PlayerClient extends Thread {
 			while (true) {
 					String command = inchan.readLine();
 					if(command == null){
+						if(connected)
+							serv.removePlayer(id);
+						else
+							disconnect();
 						break;
 					}
 					if(command.endsWith("/")){
 						if(command.contains("EXIT/"+name)) { 
+							if(connected)
+								serv.removePlayer(id);
+							else
+								disconnect();
 							break;
 						}else if(command.contains("REGISTER/") && !connected && command.split("/").length > 2){
 							if(!register(command.split("/")[1],command.split("/")[2])){
@@ -72,7 +81,7 @@ public class PlayerClient extends Thread {
 							init(command.split("/")[1]);
 							serv.printToAll("CONNECTED/"+name+"/ \n");
 						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
-							serv.cheating();
+							game.cheating();
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
 								String word = command.split("/")[1];
 								guess(word);						
@@ -87,9 +96,11 @@ public class PlayerClient extends Thread {
 						}
 					}
 				}
+		/*
 			s.close();
 			if(connected)
 				serv.removePlayer(id);
+				*/
 		}catch(IOException e){ 
 			e.printStackTrace(); 
 			System.exit(1);
@@ -111,8 +122,11 @@ public class PlayerClient extends Thread {
 	//function to disconnect properly
 	public void disconnect(){
 		try {
-			inchan.close(); //NOT SURE IF IMPORTANT OR NOT
-			s.close();
+			System.out.println("i ll disconnect");
+		//inchan.close(); //NOT SURE IF IMPORTANT OR NOT
+			s.shutdownInput();
+			s.shutdownOutput();
+			//s.close();
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -162,7 +176,7 @@ public class PlayerClient extends Thread {
 	}
 	
 	private void guess(String word){
-		if(serv.correctWord(word,this)){
+		if(game.correctWord(word,this)){
 			printToStream("WORD_FOUND/"+name+"/"+word+"\n");
 			serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
 			guessed = true;
@@ -209,6 +223,10 @@ public class PlayerClient extends Thread {
 	public void setGuessed(boolean b) {
 		guessed = b;	
 	}	
+	
+	public void setGame(Game g){
+		this.game = g;
+	}
 }
 
 

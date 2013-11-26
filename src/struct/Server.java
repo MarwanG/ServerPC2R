@@ -30,7 +30,7 @@ public class Server extends Thread {
 	String word;
 	int nbCheat = 0;
 	
-	Thread game;
+	Game game;
 	
 	public Server(){
 		this(Config.nbJouer,Config.port);	
@@ -48,7 +48,6 @@ public class Server extends Thread {
 
 	//run function for thread
 	public void run(){
-		{
 			try {
 				while(true){
 					serv = new ServerSocket(port);
@@ -72,150 +71,24 @@ public class Server extends Thread {
 				e.printStackTrace();
 			}			
 		}
-	}
-	
-	//thread to start a game.
-	public void gameRun(){	
-		game = new Thread(){
-			public void run(){
-				for(int i = 0 ; i < players.size() ; i++){
-					System.out.println("Game nb : " + i);
-					startNewPartie(i);	
-					synchronized(obj){
-							try {
-								obj.wait();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						if(nbCheat >= 3){
-							printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
-						}
-						if(founds.size() > 0){
-							printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
-							try {
-								Thread.sleep(Config.timeSec * 1000);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						endPartie(i);
-						System.out.println("next round");
-				}
-				System.out.println("end of partie");
-				running = false;
-				disconnectAll();
-			}
-		};
-		game.start();
-	}
 	
 	
-	//UTILS FOR RUNNING A GAME
 
-
-	//starts a party	
-	private void startNewPartie(int i){
-		runTimer();
-		founds = new ArrayList<PlayerClient>();
-		partie = true;
-		players.get(i).setType(TypeJouer.drawer);
-		drawer = players.get(i);
-		word = Tools.randomWord();
-		nbFound = 0;
-		nbCheat = 0;
-		String msg = "NEW_ROUND/dessinateur/"+word+"/ \n";
-		printToDrawer(msg);
-		printToGuessers("NEW_ROUND/chercheur/ \n");		
-	}
-	
-	//ends a party
-	private void endPartie(int i){
-		updateScores();
-		if(founds.size() > 0)
-			printToAll("END_ROUND/"+founds.get(0).getNom()+"/"+word + "\n");
-		else
-			printToAll("END_ROUND/"+word+"\n");
-		printScore();
-		players.get(i).setType(TypeJouer.guesser);
-		for(int z = 0 ; z < players.size() ; z++){
-			players.get(z).setGuessed(false);
-		}
-	}
-	
-	//timer to count global time and end after Config.tMax mins
-	private void runTimer(){
-		new Thread(){
-			public void run(){
-				try {
-					Thread.sleep(Config.tMax * 1000);
-					synchronized(obj){
-						obj.notify();
-					}
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}.start();
-	}
-	
 	//disconnects everyone
-	private void disconnectAll(){
+	public void disconnectAll(){
+		System.out.println("i got called ");
 		for(int i = 0 ; i < players.size() ; i++)
 			players.get(i).disconnect();
 	}
 
-	//updates scores
-	private void updateScores(){
-		for(int i = 0 ; i < founds.size() ; i++){
-			int sc = Math.max(10-i, 5);
-			founds.get(i).addToScore(sc);
-		}
-		if(founds.size()>0)
-			drawer.addToScore(10+(founds.size()-1));
-	}
 	
-	//to declare cheating and end partie if there is more than 3.
-	public void cheating(){
-		nbCheat++;
-		if(nbCheat >= 3){
-			synchronized(obj){
-				obj.notify();
-			}
-		}
-	}
 	
-	//test if guessed word is correct.
-	public boolean correctWord(String w,PlayerClient jc){
-		if(this.word.equals(w)){
-			nbFound++;
-			synchronized(founds){
-				founds.add(jc);
-			}
-			synchronized(obj){
-				obj.notify();
-			}
-			if(founds.size() == players.size()-1){
-				game.interrupt();
-			}
-			return true;
-		}else{
-			return false;
-		}
-	}
+	
 	
 	
 	//PRINT FUNCTIONS.
 	
-	//prints the current score to everyone.
-	private void printScore(){
-		String msg = "SCORE_FOUND/";
-		for(int i = 0 ; i < players.size() ; i++){
-			msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
-		}
-		msg+="\n";
-		this.printToAll(msg);
-	}
+	
 	
 	//prints to add except user with the id;
 	public void printToExcept(String s,int id){
@@ -262,7 +135,10 @@ public class Server extends Thread {
 		System.out.println("nbConnected = " + nbConnected);
 		if(nbConnected == capacity){
 			complete = true;
-			gameRun();
+			game = new Game(this, players, obj);
+			for(int i = 0 ; i < players.size() ; i++)
+				players.get(i).setGame(game);
+			game.start();
 			System.out.println("A new game will run");
 		}
 			
@@ -305,5 +181,24 @@ public class Server extends Thread {
 	
 	public int getNbFound(){
 		return nbFound;
+	}
+
+	public PlayerClient getDrawer() {
+		return drawer;
+	}
+
+	public void setDrawer(PlayerClient drawer) {
+		this.drawer = drawer;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void setRunning(boolean running) {
+		this.running = running;
 	}	
+
+	
+	
 }
