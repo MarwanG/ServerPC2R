@@ -46,7 +46,6 @@ public class Server extends Thread {
 	}
 	
 
-	//run function for thread
 	public void run(){
 			try {
 				while(true){

@@ -13,7 +13,7 @@ import tools.Tools;
 
 public class PlayerClient extends Thread {
 
-		BufferedReader inchan;
+	BufferedReader inchan;
 	DataOutputStream outchan;
 	Socket s;
 	String name;
@@ -92,7 +92,7 @@ public class PlayerClient extends Thread {
 						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer && command.split("/").length > 4){
 								sendDrawing(command);
 						}else if(command.contains("TALK/")){
-							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n", id);
+							serv.printToAll("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n");
 						}
 					}
 				}

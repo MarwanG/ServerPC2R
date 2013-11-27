@@ -2,8 +2,6 @@ package struct;
 
 import java.util.ArrayList;
 
-import com.apple.mrj.macos.carbon.Timer;
-
 import tools.Config;
 import tools.Tools;
 
