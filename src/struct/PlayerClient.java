@@ -78,6 +78,9 @@ public class PlayerClient extends Thread {
 								break;
 							}
 						}else if(command.contains("CONNECT/") && !connected){
+							if(Profiles.nameExists(command.split("/")[1]) && serv.NameConnected(command.split("/")[1])){
+								printToStream("ACCESSDENIED/ \n");
+							}
 							init(command.split("/")[1]);
 							serv.printToAll("CONNECTED/"+name+"/ \n");
 						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
@@ -96,7 +99,8 @@ public class PlayerClient extends Thread {
 						}
 					}
 				}
-		/*
+				disconnect();
+		 /*	
 			s.close();
 			if(connected)
 				serv.removePlayer(id);

@@ -199,6 +199,12 @@ public class Server extends Thread {
 		this.running = running;
 	}	
 
-	
+	public boolean NameConnected(String name){
+		for(int i = 0 ; i < players.size() ; i++){
+			if(name.equals(players.get(i).getNom()))
+				return true;
+		}
+		return false;
+	}
 	
 }
