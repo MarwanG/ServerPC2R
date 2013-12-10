@@ -48,6 +48,7 @@ public class PlayerClient extends Thread {
 		guessed = false;
 		serv.addPlayer(this);
 		connected = true;
+		this.printToStream("WELCOME/"+name+"/");
 	}
 	
 	//fonction run of the thread.
@@ -78,11 +79,13 @@ public class PlayerClient extends Thread {
 								break;
 							}
 						}else if(command.contains("CONNECT/") && !connected){
-							if(Profiles.nameExists(command.split("/")[1]) && serv.NameConnected(command.split("/")[1])){
+							if(Profiles.nameExists(command.split("/")[1]) || serv.NameConnected(command.split("/")[1])){
 								printToStream("ACCESSDENIED/ \n");
+								break;
+							}else{
+								init(command.split("/")[1]);
+								serv.printToExcept("CONNECTED/"+name+"/ \n", id);
 							}
-							init(command.split("/")[1]);
-							serv.printToAll("CONNECTED/"+name+"/ \n");
 						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
 							game.cheating();
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
@@ -96,6 +99,10 @@ public class PlayerClient extends Thread {
 								sendDrawing(command);
 						}else if(command.contains("TALK/")){
 							serv.printToAll("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n");
+						}else if(command.contains("COURBE/") && type==TypeJouer.drawer && command.split("/").length > 8){
+							sendDrawingCourbe(command);
+						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
+							serv.notifyObj();
 						}
 					}
 				}
@@ -176,7 +183,20 @@ public class PlayerClient extends Thread {
 			line+=Config.rgb[i]+"/";
 		}
 		line+=Config.size + "/ \n";
-		serv.printToGuessers(line);
+		serv.printToAll(line);
+	}
+	
+	private void sendDrawingCourbe(String command){
+		String[] points = command.split("/");
+		String line = "COURBE/";
+		for(int i = 1 ; i < points.length ; i++){
+			line+=points[i]+"/";
+		}	
+		for(int i = 0 ; i < Config.rgb.length ; i++){
+			line+=Config.rgb[i]+"/";
+		}
+		line+=Config.size + "/ \n";
+		serv.printToAll(line);
 	}
 	
 	private void guess(String word){

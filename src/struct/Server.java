@@ -15,6 +15,7 @@ public class Server extends Thread {
 	ArrayList<Socket> sockets;
 	ArrayList<DataOutputStream> streams;
 	ArrayList<PlayerClient> founds;
+	ArrayList<String> names;
 	PlayerClient drawer;
 	ServerSocket serv;
 	Socket client;
@@ -43,6 +44,7 @@ public class Server extends Thread {
 		players = new ArrayList<PlayerClient>();
 		sockets = new ArrayList<Socket>();
 		streams = new ArrayList<DataOutputStream>();
+		names = new ArrayList<String>();
 	}
 	
 
@@ -206,4 +208,21 @@ public class Server extends Thread {
 		return false;
 	}
 	
+	public boolean exisits(String name){
+		for(int i = 0 ; i < names.size(); i++){
+			if(name.equals(names.get(i)))
+				return true;
+		}
+		return false;
+	}
+	
+	public void addName(String name){
+		names.add(name);
+	}
+	
+	public void notifyObj(){
+		synchronized(obj){
+			obj.notify();
+		}
+	}
 }
