@@ -9,9 +9,18 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import struct.Player;
-
+/**
+ * Class responsible for creating profiles 
+ * @author marwanghanem
+ *
+ */
 public class Profiles {
 
+	
+	/**
+	 * Function that initializations the accounts that have been saved before.
+	 */
+	@SuppressWarnings("unchecked")
 	public static void initComptes(){
 		ArrayList<Player> list = null; 
 		
@@ -28,7 +37,6 @@ public class Profiles {
 			i.printStackTrace();
 			return; 
 		}catch(ClassNotFoundException c) {
-			System.out.println("ArrayList<Player> class not found"); 
 			c.printStackTrace();
 			return;
 		}
@@ -37,9 +45,11 @@ public class Profiles {
 		}else{
 			Config.comptes = list;
 		}
-		System.out.println("Accounts have been charged");
 	}
 	
+	/**
+	 * Function that keeps saves the accounts in file listCompte.ser to make sure there is a backup.
+	 */
 	public static void saveCompters(){
 		try
 		{
@@ -56,12 +66,17 @@ public class Profiles {
 			}
 			out.close();
 			fileOut.close();
-			System.out.println("Accounts have been backed up");
 		}catch(IOException i) {
 			i.printStackTrace(); 
 		}
 	}
 	
+	
+	/**
+	 * Function that tests if the string s has already be used as a nickname by a different user.
+	 * @param s
+	 * @return
+	 */
 	public static boolean nameExists(String s){
 		boolean res = false;
 		for(Player p : Config.comptes){
@@ -73,6 +88,13 @@ public class Profiles {
 		return res;
 	}
 	
+	/**
+	 * Function tests if the name and password passed as parameter correspond to an actual player in
+	 * the database.
+	 * @param name
+	 * @param password
+	 * @return
+	 */
 	public static Player playerExists(String name , String password){
 		for(Player p : Config.comptes){
 			if(p.getName().equals(name) && p.getPassword().equals(password)){
@@ -82,6 +104,11 @@ public class Profiles {
 		return null;
 	}
 	
+	
+	/**
+	 * Adds player p to the dataBase.
+	 * @param p
+	 */
 	public static void addPlayer(Player p){
 		Config.comptes.add(p);
 		saveCompters();

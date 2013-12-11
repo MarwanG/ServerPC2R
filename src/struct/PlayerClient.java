@@ -4,13 +4,18 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.net.Socket;
 
 import tools.Config;
 import tools.Profiles;
 import tools.Tools;
 
+
+/**
+ * 
+ * @author marwanghanem
+ *
+ */
 public class PlayerClient extends Thread {
 
 	BufferedReader inchan;
@@ -39,7 +44,11 @@ public class PlayerClient extends Thread {
 		} 
 	}
 	
-	//init function called when user actually connects. cmd: CONNECT/
+	/**
+	 * Method to init the class with the name normally used after 
+	 * a command CONNECT/ has been recived.
+	 * @param s
+	 */
 	private void init(String s){
 		this.name = s;
 		name.replace("/", "");
@@ -48,10 +57,12 @@ public class PlayerClient extends Thread {
 		guessed = false;
 		serv.addPlayer(this);
 		connected = true;
-		this.printToStream("WELCOME/"+name+"/");
+		this.printToStream("WELCOME/"+name+"/\n");
 	}
 	
-	//fonction run of the thread.
+	/**
+	 * Method run for the thread
+	 */
 	public void run(){
 		try {
 			while (true) {
@@ -98,7 +109,7 @@ public class PlayerClient extends Thread {
 						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer && command.split("/").length > 4){
 								sendDrawing(command);
 						}else if(command.contains("TALK/")){
-							serv.printToAll("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n");
+							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n",id);
 						}else if(command.contains("COURBE/") && type==TypeJouer.drawer && command.split("/").length > 8){
 							sendDrawingCourbe(command);
 						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
@@ -107,18 +118,18 @@ public class PlayerClient extends Thread {
 					}
 				}
 				disconnect();
-		 /*	
-			s.close();
-			if(connected)
-				serv.removePlayer(id);
-				*/
 		}catch(IOException e){ 
-			e.printStackTrace(); 
+			//e.printStackTrace(); 
 			System.exit(1);
 		} 
 	}
 
-	//function for print to DataOutputStream
+	/**
+	 * Method to print stream to the client.
+	 * uses writeUTF instead of writeChars to be compatible with C programs
+	 * only difference the first 2 bytes are the number of bytes to be transmitted.
+	 * @param s
+	 */
 	public void printToStream(String s){
 		try {
 			synchronized(outchan){
@@ -130,20 +141,25 @@ public class PlayerClient extends Thread {
 		}
 	}
 	
-	//function to disconnect properly
+	/**
+	 * Method to disconnect the client properly.
+	 */
 	public void disconnect(){
 		try {
-			System.out.println("i ll disconnect");
-		//inchan.close(); //NOT SURE IF IMPORTANT OR NOT
 			s.shutdownInput();
 			s.shutdownOutput();
-			//s.close();
+			
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	
+	/**
+	 * Method to register a player with the name and password passed.
+	 * @param name
+	 * @param password
+	 * @return
+	 */
 	private boolean register(String name,String password){
 		if(!Profiles.nameExists(name)){
 			init(name);
@@ -157,6 +173,13 @@ public class PlayerClient extends Thread {
 		}
 	}
 	
+	/**
+	 * Method responsible for the login a client
+	 * with name and password.
+	 * @param name
+	 * @param password
+	 * @return
+	 */
 	private boolean login(String name,String password){
 		Player tmp = Profiles.playerExists(name, password);
 		if(tmp == null){
@@ -171,7 +194,10 @@ public class PlayerClient extends Thread {
 	}
 	
 	
-
+	/**
+	 * Method to send command LINE to all clients.
+	 * @param command
+	 */
 
 	private void sendDrawing(String command) {
 		String[] points = command.split("/");
@@ -186,6 +212,10 @@ public class PlayerClient extends Thread {
 		serv.printToAll(line);
 	}
 	
+	/**
+	 * Method to send command COURBE to all clients.
+	 * @param command
+	 */
 	private void sendDrawingCourbe(String command){
 		String[] points = command.split("/");
 		String line = "COURBE/";
@@ -199,17 +229,20 @@ public class PlayerClient extends Thread {
 		serv.printToAll(line);
 	}
 	
+	/**
+	 * Method to test if the guessed word is correct
+	 * @param word
+	 */
 	private void guess(String word){
 		if(game.correctWord(word,this)){
 			printToStream("WORD_FOUND/"+name+"/"+word+"\n");
 			serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
 			guessed = true;
 		}else{
-			serv.printToExcept("GUESSED/"+word+"/"+name+"/ \n", id);
+			serv.printToAll("GUESSED/"+word+"/"+name+"/ \n");
 		}
 	}
 		
-	//SETTERS AND GETTERS
 	public void setType(TypeJouer type){
 		this.type = type;
 	}

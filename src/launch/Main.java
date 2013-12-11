@@ -7,13 +7,14 @@ import tools.Tools;
 
 import com.beust.jcommander.JCommander;
 
+/**
+ * Main class to run the server.
+ * @author marwanghanem
+ *
+ */
 public class Main {
-
 	public static void main(String args[]){
-		
-		//Responsible for the parameters.
 		new JCommander(new Config(),args);
-		//chargement de bili;
 		Profiles.initComptes();
 		Tools.fillDic(Config.dico);
 		Server s = new Server();

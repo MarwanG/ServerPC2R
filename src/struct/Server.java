@@ -7,8 +7,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import tools.Config;
-import tools.Tools;
-
+/**
+ * 
+ * @author marwanghanem
+ * Class responsible for the server.
+ */
 public class Server extends Thread {
 
 	ArrayList<PlayerClient> players;
@@ -30,13 +33,22 @@ public class Server extends Thread {
 	public Object obj = new Object();
 	String word;
 	int nbCheat = 0;
-	
 	Game game;
 	
+	
+	/**
+	 * Constructor used in the case where the variables are in default.
+	 */
 	public Server(){
 		this(Config.nbJouer,Config.port);	
 	}
 	
+	
+	/**
+	 * Constructor that use modified variables.
+	 * @param c Capacity of the players in a game.
+	 * @param port the port to be used;
+	 */
 	public Server(int c , int port){
 		this.capacity = c;
 		this.port = port;
@@ -47,7 +59,11 @@ public class Server extends Thread {
 		names = new ArrayList<String>();
 	}
 	
-
+	
+	
+	/**
+	 * Method responsible to run the thread.
+	 */
 	public void run(){
 			try {
 				while(true){
@@ -75,23 +91,21 @@ public class Server extends Thread {
 	
 	
 
-	//disconnects everyone
+	/**
+	 * Method responsible to disconnect all the players.
+	 */
 	public void disconnectAll(){
 		System.out.println("i got called ");
 		for(int i = 0 ; i < players.size() ; i++)
 			players.get(i).disconnect();
 	}
 
-	
-	
-	
-	
-	
-	//PRINT FUNCTIONS.
-	
-	
-	
-	//prints to add except user with the id;
+
+	/**
+	 * Method prints the string s to all players except the one with id = id;
+	 * @param s
+	 * @param id
+	 */
 	public void printToExcept(String s,int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getPlayerId() != id){
@@ -100,13 +114,20 @@ public class Server extends Thread {
 		}
 	}
 	
-	//print to certain player.
+	/**
+	 * Method prints the string s to the player in position pos in the list of players.
+	 * @param s
+	 * @param pos
+	 */
 	public void printToSpecfic(String s,int pos){
 		players.get(pos).printToStream(s);
 	}
 	
 	
-	//print to guessers.
+	/**
+	 * Method prints the string s all to the guessers 
+	 * @param s
+	 */
 	public void printToGuessers(String s){ 
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getType() == TypeJouer.guesser){
@@ -115,21 +136,29 @@ public class Server extends Thread {
 		}
 	}
 	
-	//print to drawer
+	/**
+	 * Method prints the string s to the drawer.
+	 * @param s
+	 */
 	public void printToDrawer(String s){ 
 		drawer.printToStream(s);
 	}
 	
-	//prints to all
+	/**
+	 * Method that prints the string s to all players
+	 * @param s
+	 */
 	public void printToAll(String s){
 		for(int i = 0 ; i < this.nbConnected ; i++){
 				players.get(i).printToStream(s);
 			}
 		}
 	
-	//ADDERS AND REMOVERS OF PLAYERS
 	
-	//ADD PLAYER.
+	/**
+	 * Adds a client(player) to the list and starts the game if the capacity has been reached.
+	 * @param player
+	 */
 	public void addPlayer(PlayerClient player){
 		this.players.add(player);
 		nbConnected++;
@@ -145,7 +174,11 @@ public class Server extends Thread {
 			
 	}
 		
-	//REMOVE PLAYER
+	/**
+	 * Method to remove the player with the ID: id and treats different cases of disconnections.
+	 * Including brutal disconnection or loss of connection.
+	 * @param id
+	 */
 	public void removePlayer(int id){
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getPlayerId() == id){
@@ -169,6 +202,29 @@ public class Server extends Thread {
 			synchronized(obj){
 				obj.notify();
 			}
+		}
+	}
+	
+	/**
+	 * Method that returns if there is a player already using the same nickname
+	 * @param name
+	 * @return
+	 */
+	public boolean NameConnected(String name){
+		for(int i = 0 ; i < players.size() ; i++){
+			if(name.equals(players.get(i).getNom()))
+				return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Method that simply does a notify on the obj to be used as a signal.
+	 */
+
+	public void notifyObj(){
+		synchronized(obj){
+			obj.notify();
 		}
 	}
 	
@@ -200,29 +256,9 @@ public class Server extends Thread {
 		this.running = running;
 	}	
 
-	public boolean NameConnected(String name){
-		for(int i = 0 ; i < players.size() ; i++){
-			if(name.equals(players.get(i).getNom()))
-				return true;
-		}
-		return false;
-	}
-	
-	public boolean exisits(String name){
-		for(int i = 0 ; i < names.size(); i++){
-			if(name.equals(names.get(i)))
-				return true;
-		}
-		return false;
-	}
 	
 	public void addName(String name){
 		names.add(name);
 	}
 	
-	public void notifyObj(){
-		synchronized(obj){
-			obj.notify();
-		}
-	}
 }

@@ -3,14 +3,18 @@ package tools;
 import java.util.ArrayList;
 
 import struct.Player;
-import struct.PlayerClient;
 
 import com.beust.jcommander.Parameter;
-
+/**
+ * Class responsible for all variables used by the server as well used by JCommander so they can 
+ * be modified easily by the user using command line.
+ * @author marwanghanem
+ *
+ */
 public class Config {
 
 	@Parameter(names="-n",description="le nombre de joueurs maximal")
-	public static int nbJouer = 2;		//normally 4
+	public static int nbJouer = 4;
 	@Parameter(names="-t",description="la durée du timeout une fois le mot trouvé")
 	public static int timeSec = 30;
 	@Parameter(names="-port",description="le port a utilise")
@@ -18,13 +22,13 @@ public class Config {
 	@Parameter(names="-dico",description="le dictionnaire")
 	public static String dico = "words";
 	@Parameter(names="-tMax",description="la durée maximal pour trouver le mot")
-	public static int tMax = 180; 		//normally 180 for test reasons 40
+	public static int tMax = 180;
 	
-	public static ArrayList<String> list;//Dictionary.
+	public static ArrayList<String> list;
 
-	public static ArrayList<Player> comptes;//list of accounts
+	public static ArrayList<Player> comptes;
 	
-	public static int [] rgb = {0,0,0};		//default rgb color black
+	public static int [] rgb = {0,0,0};
 	
 	public static int size = 1;
 	
