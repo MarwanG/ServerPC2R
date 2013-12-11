@@ -2,8 +2,6 @@ package struct;
 
 import java.util.ArrayList;
 
-import com.apple.mrj.macos.carbon.Timer;
-
 import tools.Config;
 import tools.Tools;
 
@@ -13,22 +11,26 @@ public class Game extends Thread {
 	private Thread Timer;
 	private String word;
 	private Server serv;
-	private Object obj = new Object();
+	private Object obj;
 	private int nbCheat;
 	private ArrayList<PlayerClient> players;
 	ArrayList<PlayerClient> founds;
-//	private int nbFound;
 	PlayerClient drawer;
 	
 
-	public Game(Server server,ArrayList<PlayerClient> players) {
+	public Game(Server server,ArrayList<PlayerClient> players, Object obj) {
 		this.serv = server;
-		this.players = players;
-		
+		this.players = players;		
+		this.obj = obj;
 	}
 
 
 	public void run() {
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		for(int i = 0 ; i < players.size() ; i++){
 			System.out.println("partie nb : " + i);
 			startNewPartie(i);	
@@ -36,26 +38,28 @@ public class Game extends Thread {
 					try {
 						obj.wait();
 					} catch (InterruptedException e) {
+						System.out.println("first");
 						e.printStackTrace();
 					}
 				}
-				if(nbCheat >= 3){
-					serv.printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
-				}
-				if(founds.size() > 0){
-					serv.printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
-					runTimer(Config.timeSec);
-					synchronized(obj){
-						try {
-							obj.wait();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+			if(nbCheat >= 3){
+				serv.printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
+			}
+			if(founds.size() > 0 && founds.size() < players.size()-1){
+				serv.printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
+				runTimer(Config.timeSec);
+				synchronized(obj){
+					try {
+						obj.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.out.println("2nd");
 					}
 				}
-				System.out.println("after the inturupt");
-				endPartie(i);
-				System.out.println("next round");
+			}
+			System.out.println("after the inturupt");
+			endPartie(i);
+			System.out.println("next round");
 		}
 		System.out.println("end of partie");
 		serv.setRunning(false);
@@ -74,7 +78,8 @@ public class Game extends Thread {
 					obj.notify();
 				}
 				if(founds.size() == players.size()-1){
-					this.interrupt();
+					System.out.println("SIZE == guessed");
+					Timer.interrupt();
 				}
 				return true;
 			}else{
@@ -87,6 +92,7 @@ public class Game extends Thread {
 			nbCheat++;
 			if(nbCheat >= 3){
 				synchronized(obj){
+					System.out.println("cheating");
 					obj.notify();
 				}
 			}
@@ -95,6 +101,7 @@ public class Game extends Thread {
 		
 		//starts a party	
 		private void startNewPartie(int i){
+			System.out.println("!!!!!!!!!!!!!!!NEW PARTIE !!!!!!!!!!!!!!!!!");
 			runTimer(Config.tMax );
 			founds = new ArrayList<PlayerClient>();
 			players.get(i).setType(TypeJouer.drawer);
@@ -115,12 +122,16 @@ public class Game extends Thread {
 				serv.printToAll("END_ROUND/"+founds.get(0).getNom()+"/"+word + "\n");
 			else
 				serv.printToAll("END_ROUND/"+word+"\n");
-			serv.printScore();
+			printScore();
 			players.get(i).setType(TypeJouer.guesser);
 			for(int z = 0 ; z < players.size() ; z++){
-				players.get(z).setGuess(false);
+				System.out.println("player nb turning him " + z);
+				players.get(z).setType(TypeJouer.guesser);
+				players.get(z).setGuessed(false);
 			}
 			Timer = null;
+
+			System.out.println("!!!!!!!!!!!!!!!FIN PARTIE !!!!!!!!!!!!!!!!!");
 		}
 		
 		//timer to count global time and end after Config.tMax mins
@@ -131,6 +142,7 @@ public class Game extends Thread {
 						Thread.sleep(t * 1000);
 						synchronized(obj){
 							obj.notify();
+							System.out.println("TIMER");
 						}
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -149,5 +161,17 @@ public class Game extends Thread {
 			if(founds.size()>0)
 				drawer.addToScore(10+(founds.size()-1));
 		}
+	
+		//prints the current score to everyone.
+		private void printScore(){
+			String msg = "SCORE_FOUND/";
+			for(int i = 0 ; i < players.size() ; i++){
+				msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
+			}
+			msg+="\n";
+			serv.printToAll(msg);
+		}
 }
+		
+
 

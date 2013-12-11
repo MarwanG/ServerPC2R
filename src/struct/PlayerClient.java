@@ -13,7 +13,7 @@ import tools.Tools;
 
 public class PlayerClient extends Thread {
 
-		BufferedReader inchan;
+	BufferedReader inchan;
 	DataOutputStream outchan;
 	Socket s;
 	String name;
@@ -24,6 +24,7 @@ public class PlayerClient extends Thread {
 	int id;
 	boolean guessed;
 	boolean connected;
+	Game game;
 	
 	public PlayerClient(int id,Socket s,Server serv){
 		this.id = id;
@@ -47,6 +48,7 @@ public class PlayerClient extends Thread {
 		guessed = false;
 		serv.addPlayer(this);
 		connected = true;
+		this.printToStream("WELCOME/"+name+"/");
 	}
 	
 	//fonction run of the thread.
@@ -55,10 +57,18 @@ public class PlayerClient extends Thread {
 			while (true) {
 					String command = inchan.readLine();
 					if(command == null){
+						if(connected)
+							serv.removePlayer(id);
+						else
+							disconnect();
 						break;
 					}
 					if(command.endsWith("/")){
 						if(command.contains("EXIT/"+name)) { 
+							if(connected)
+								serv.removePlayer(id);
+							else
+								disconnect();
 							break;
 						}else if(command.contains("REGISTER/") && !connected && command.split("/").length > 2){
 							if(!register(command.split("/")[1],command.split("/")[2])){
@@ -69,10 +79,15 @@ public class PlayerClient extends Thread {
 								break;
 							}
 						}else if(command.contains("CONNECT/") && !connected){
-							init(command.split("/")[1]);
-							serv.printToAll("CONNECTED/"+name+"/ \n");
+							if(Profiles.nameExists(command.split("/")[1]) || serv.NameConnected(command.split("/")[1])){
+								printToStream("ACCESSDENIED/ \n");
+								break;
+							}else{
+								init(command.split("/")[1]);
+								serv.printToExcept("CONNECTED/"+name+"/ \n", id);
+							}
 						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
-							serv.cheating();
+							game.cheating();
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
 								String word = command.split("/")[1];
 								guess(word);						
@@ -83,13 +98,20 @@ public class PlayerClient extends Thread {
 						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer && command.split("/").length > 4){
 								sendDrawing(command);
 						}else if(command.contains("TALK/")){
-							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n", id);
+							serv.printToAll("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n");
+						}else if(command.contains("COURBE/") && type==TypeJouer.drawer && command.split("/").length > 8){
+							sendDrawingCourbe(command);
+						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
+							serv.notifyObj();
 						}
 					}
 				}
+				disconnect();
+		 /*	
 			s.close();
 			if(connected)
 				serv.removePlayer(id);
+				*/
 		}catch(IOException e){ 
 			e.printStackTrace(); 
 			System.exit(1);
@@ -111,8 +133,11 @@ public class PlayerClient extends Thread {
 	//function to disconnect properly
 	public void disconnect(){
 		try {
-			inchan.close(); //NOT SURE IF IMPORTANT OR NOT
-			s.close();
+			System.out.println("i ll disconnect");
+		//inchan.close(); //NOT SURE IF IMPORTANT OR NOT
+			s.shutdownInput();
+			s.shutdownOutput();
+			//s.close();
 		}catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -158,11 +183,24 @@ public class PlayerClient extends Thread {
 			line+=Config.rgb[i]+"/";
 		}
 		line+=Config.size + "/ \n";
-		serv.printToGuessers(line);
+		serv.printToAll(line);
+	}
+	
+	private void sendDrawingCourbe(String command){
+		String[] points = command.split("/");
+		String line = "COURBE/";
+		for(int i = 1 ; i < points.length ; i++){
+			line+=points[i]+"/";
+		}	
+		for(int i = 0 ; i < Config.rgb.length ; i++){
+			line+=Config.rgb[i]+"/";
+		}
+		line+=Config.size + "/ \n";
+		serv.printToAll(line);
 	}
 	
 	private void guess(String word){
-		if(serv.correctWord(word,this)){
+		if(game.correctWord(word,this)){
 			printToStream("WORD_FOUND/"+name+"/"+word+"\n");
 			serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
 			guessed = true;
@@ -209,6 +247,10 @@ public class PlayerClient extends Thread {
 	public void setGuessed(boolean b) {
 		guessed = b;	
 	}	
+	
+	public void setGame(Game g){
+		this.game = g;
+	}
 }
 
 

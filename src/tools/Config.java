@@ -10,7 +10,7 @@ import com.beust.jcommander.Parameter;
 public class Config {
 
 	@Parameter(names="-n",description="le nombre de joueurs maximal")
-	public static int nbJouer = 3;		//normally 4
+	public static int nbJouer = 2;		//normally 4
 	@Parameter(names="-t",description="la durée du timeout une fois le mot trouvé")
 	public static int timeSec = 30;
 	@Parameter(names="-port",description="le port a utilise")
