@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 import tools.Config;
@@ -19,7 +20,8 @@ import tools.Tools;
 public class PlayerClient extends Thread {
 
 	BufferedReader inchan;
-	DataOutputStream outchan;
+	//DataOutputStream outchan;
+	PrintWriter outchan;
 	Socket s;
 	String name;
 	Player p;
@@ -38,7 +40,8 @@ public class PlayerClient extends Thread {
 		this.connected = false;
 		try {
 			inchan = new BufferedReader(new InputStreamReader(s.getInputStream()));
-			outchan = new DataOutputStream(s.getOutputStream());
+			//outchan = new DataOutputStream(s.getOutputStream());
+			outchan = new PrintWriter(s.getOutputStream());
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -97,8 +100,9 @@ public class PlayerClient extends Thread {
 								init(command.split("/")[1]);
 								serv.printToExcept("CONNECTED/"+name+"/ \n", id);
 							}
-						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser){
-							game.cheating();
+						}else if(command.contains("CHEAT/") && type==TypeJouer.guesser && command.split("/").length > 1){
+								if(command.split("/")[1].equals(game.drawer.getNom()))
+									game.cheating();
 						}else if(command.contains("GUESS/") && type==TypeJouer.guesser && !guessed){
 								String word = command.split("/")[1];
 								guess(word);						
@@ -109,7 +113,7 @@ public class PlayerClient extends Thread {
 						}else if(command.contains("SET_LINE/") && type==TypeJouer.drawer && command.split("/").length > 4){
 								sendDrawing(command);
 						}else if(command.contains("TALK/")){
-							serv.printToExcept("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n",id);
+							serv.printToAll("LISTEN/"+name+"/"+command.split("/")[1]+"/ \n");
 						}else if(command.contains("COURBE/") && type==TypeJouer.drawer && command.split("/").length > 8){
 							sendDrawingCourbe(command);
 						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
@@ -128,15 +132,21 @@ public class PlayerClient extends Thread {
 	 * Method to print stream to the client.
 	 * uses writeUTF instead of writeChars to be compatible with C programs
 	 * only difference the first 2 bytes are the number of bytes to be transmitted.
+	 * A 0.25 second delay is added to make sure no loss of data while client is 
+	 * reciving. since server has no actual control on the network-window of client.
 	 * @param s
 	 */
 	public void printToStream(String s){
+	
 		try {
+			Thread.sleep(50);
 			synchronized(outchan){
 				//outchan.writeChars(s);
-				outchan.writeUTF(s);
+				//outchan.writeUTF(s);
+				outchan.print(s);
+				outchan.flush();
 			}
-		} catch (IOException e) {
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
@@ -158,7 +168,7 @@ public class PlayerClient extends Thread {
 	 * Method to register a player with the name and password passed.
 	 * @param name
 	 * @param password
-	 * @return
+	 * @return returns true if the register process has been done correctly.
 	 */
 	private boolean register(String name,String password){
 		if(!Profiles.nameExists(name)){
@@ -178,7 +188,7 @@ public class PlayerClient extends Thread {
 	 * with name and password.
 	 * @param name
 	 * @param password
-	 * @return
+	 * @return true if the user actually manages to login.
 	 */
 	private boolean login(String name,String password){
 		Player tmp = Profiles.playerExists(name, password);
@@ -235,7 +245,7 @@ public class PlayerClient extends Thread {
 	 */
 	private void guess(String word){
 		if(game.correctWord(word,this)){
-			printToStream("WORD_FOUND/"+name+"/"+word+"\n");
+			printToStream("WORD_FOUND/"+name+"/"+word+"/\n");
 			serv.printToExcept("WORD_FOUND/"+name+"/ \n", id);
 			guessed = true;
 		}else{

@@ -37,7 +37,7 @@ public class Tools {
 
 	/**
 	 * Method that returns a random word for the list of words.
-	 * @return
+	 * @return a string that corresponds to the word for next round
 	 */
 	public static String randomWord(){
 		double f = Math.random()*Config.list.size();

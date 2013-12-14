@@ -206,9 +206,28 @@ public class Server extends Thread {
 	}
 	
 	/**
+	 * Special method to remove the player that cheated without notifying 
+	 * since the turn would be ending in all cases.
+	 * @param id the player's id is passed to keep the method general in case
+	 * 		  future implementations include other cheaters beside drawer.
+	 */
+	public void removeCheater(int id){
+		for(int i = 0 ; i < this.nbConnected ; i++){
+			if(players.get(i).getPlayerId() == id){
+				printToExcept("EXITED/"+players.get(i).getNom()+"/\n", id);
+				players.remove(i);
+				break;
+			}
+		}
+		if(nbConnected > 0)
+			nbConnected--;
+		
+	}
+	
+	/**
 	 * Method that returns if there is a player already using the same nickname
 	 * @param name
-	 * @return
+	 * @return returns true if there is a player in the party with the same nickname
 	 */
 	public boolean NameConnected(String name){
 		for(int i = 0 ; i < players.size() ; i++){

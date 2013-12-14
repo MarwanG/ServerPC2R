@@ -23,6 +23,8 @@ public class Config {
 	public static String dico = "words";
 	@Parameter(names="-tMax",description="la durée maximal pour trouver le mot")
 	public static int tMax = 180;
+	@Parameter(names="-cheat",description="la nombre de joueur qui faut declare cheat")
+	public static int cheat = 3;
 	
 	public static ArrayList<String> list;
 
@@ -31,5 +33,7 @@ public class Config {
 	public static int [] rgb = {0,0,0};
 	
 	public static int size = 1;
+	
+	
 	
 }

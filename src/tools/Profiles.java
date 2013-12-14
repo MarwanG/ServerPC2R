@@ -75,7 +75,7 @@ public class Profiles {
 	/**
 	 * Function that tests if the string s has already be used as a nickname by a different user.
 	 * @param s
-	 * @return
+	 * @return returns a boolean that corresponds to true if a player with name s already exisits.
 	 */
 	public static boolean nameExists(String s){
 		boolean res = false;
@@ -93,7 +93,7 @@ public class Profiles {
 	 * the database.
 	 * @param name
 	 * @param password
-	 * @return
+	 * @return returns true if a player with the same name and password exists
 	 */
 	public static Player playerExists(String name , String password){
 		for(Player p : Config.comptes){

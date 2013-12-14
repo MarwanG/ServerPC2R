@@ -29,7 +29,7 @@ public class Game extends Thread {
 	 * 
 	 * @param server Server of type struct.server
 	 * @param players List of player Client
-	 * @param obj	 Object for sync between different classes.
+	 * @param obj Object for sync between different classes.
 	 */
 
 	public Game(Server server,ArrayList<PlayerClient> players, Object obj) {
@@ -41,11 +41,13 @@ public class Game extends Thread {
 
 	/**
 	 * Function responsible to run the game.
+	 * A wait of 2 seconds is added to make sure that all clients are 
+	 * ready to play.
 	 */
 	
 	public void run() {
 		try {
-			Thread.sleep(10000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
@@ -60,6 +62,8 @@ public class Game extends Thread {
 				}
 			if(nbCheat >= 3){
 				serv.printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
+				founds.clear();
+				serv.removeCheater(players.get(i).getPlayerId());
 			}
 			if(founds.size() > 0 && founds.size() < players.size()-1){
 				serv.printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
@@ -108,7 +112,7 @@ public class Game extends Thread {
 	 */
 	public void cheating(){
 		nbCheat++;
-		if(nbCheat >= 3){
+		if(nbCheat >= Config.cheat){
 			synchronized(obj){
 				obj.notify();
 			}
@@ -136,14 +140,15 @@ public class Game extends Thread {
 	/**
 	 * Function to end the turn and print for players.
 	 * and rest the variables needed for the next turn. 
+	 * in case where no one founds it a extra / is added to always have same number of parameters
 	 * @param i
 	 */
 	private void endPartie(int i){
 		updateScores();
 		if(founds.size() > 0)
-			serv.printToAll("END_ROUND/"+founds.get(0).getNom()+"/"+word + "\n");
+			serv.printToAll("END_ROUND/"+founds.get(0).getNom()+"/"+word + "/\n");
 		else
-			serv.printToAll("END_ROUND/"+word+"\n");
+			serv.printToAll("END_ROUND//"+word+"/\n");
 		printScore();
 		players.get(i).setType(TypeJouer.guesser);
 		for(int z = 0 ; z < players.size() ; z++){
@@ -193,7 +198,7 @@ public class Game extends Thread {
 	 * to all players.
 	 */
 	private void printScore(){
-		String msg = "SCORE_FOUND/";
+		String msg = "SCORE_ROUND/";
 		for(int i = 0 ; i < players.size() ; i++){
 			msg+= players.get(i).getNom()+"/"+players.get(i).getScore()+"/";
 		}
