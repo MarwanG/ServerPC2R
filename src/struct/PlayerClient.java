@@ -63,6 +63,13 @@ public class PlayerClient extends Thread {
 		this.printToStream("WELCOME/"+name+"/\n");
 	}
 	
+	private void initSpec(String s){
+		this.name = s;
+		this.type = TypeJouer.spec;
+		connected = true;
+		this.printToStream("WELCOME/"+name+"/ \n");
+		serv.AddObs(this);
+	}
 	/**
 	 * Method run for the thread
 	 */
@@ -85,10 +92,18 @@ public class PlayerClient extends Thread {
 								disconnect();
 							break;
 						}else if(command.contains("REGISTER/") && !connected && command.split("/").length > 2){
+							if(serv.getNbConnected() > serv.getCapacity()){
+								printToStream("ACCESSDENIED/ \n");
+								break;
+							}
 							if(!register(command.split("/")[1],command.split("/")[2])){
 								break;
 							}
 						}else if(command.contains("LOGIN/") && !connected  && command.split("/").length > 2){
+							if(serv.getNbConnected() > serv.getCapacity()){
+								printToStream("ACCESSDENIED/ \n");
+								break;
+							}
 							if(!login(command.split("/")[1],command.split("/")[2])){
 								break;
 							}
@@ -97,6 +112,10 @@ public class PlayerClient extends Thread {
 								printToStream("ACCESSDENIED/ \n");
 								break;
 							}else{
+								if(serv.getNbConnected() > serv.getCapacity()){
+									printToStream("ACCESSDENIED/ \n");
+									break;
+								}
 								init(command.split("/")[1]);
 								serv.printToExcept("CONNECTED/"+name+"/ \n", id);
 							}
@@ -118,6 +137,11 @@ public class PlayerClient extends Thread {
 							sendDrawingCourbe(command);
 						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
 							serv.notifyObj();
+						}else if(command.contains("SPECTATOR/")  && !connected){
+							initSpec(command.split("/")[1]);
+							serv.printToExcept("CONNECTED/"+name+"/ \n", id);
+						}else{
+							System.out.println("command unknown will be ignored");
 						}
 					}
 				}

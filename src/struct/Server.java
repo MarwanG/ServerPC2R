@@ -14,9 +14,13 @@ import tools.Config;
  */
 public class Server extends Thread {
 
+	
+	
+	ArrayList<String> listOfCommands;
 	ArrayList<PlayerClient> players;
 	ArrayList<Socket> sockets;
 	ArrayList<DataOutputStream> streams;
+	ArrayList<PlayerClient> observs;
 	ArrayList<PlayerClient> founds;
 	ArrayList<String> names;
 	PlayerClient drawer;
@@ -56,6 +60,7 @@ public class Server extends Thread {
 		players = new ArrayList<PlayerClient>();
 		sockets = new ArrayList<Socket>();
 		streams = new ArrayList<DataOutputStream>();
+		observs = new ArrayList<PlayerClient>();
 		names = new ArrayList<String>();
 	}
 	
@@ -66,24 +71,25 @@ public class Server extends Thread {
 	 */
 	public void run(){
 			try {
+				this.listOfCommands = new ArrayList<String>();
 				while(true){
 					serv = new ServerSocket(port);
 					while(true){
 							client = serv.accept();
 							System.out.println("New connection");
-							if(nbConnected >= capacity || running){
+							/*if(nbConnected >= capacity || running){
 								DataOutputStream outchan = new DataOutputStream(client.getOutputStream());
 								outchan.writeChars("Maximum capacity please try again later\n");
 								client.close();
 								if(complete)
 									break;
-							}else{
+							}else{*/
 								PlayerClient jc = new PlayerClient(ids,client,this);
 								ids++;
 								jc.start();
 							}
 					}
-				}
+				//}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}			
@@ -107,6 +113,8 @@ public class Server extends Thread {
 	 * @param id
 	 */
 	public void printToExcept(String s,int id){
+		this.listOfCommands.add(s);
+		printToObs(s);
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getPlayerId() != id){
 				players.get(i).printToStream(s);
@@ -120,6 +128,8 @@ public class Server extends Thread {
 	 * @param pos
 	 */
 	public void printToSpecfic(String s,int pos){
+		this.listOfCommands.add(s);
+		printToObs(s);
 		players.get(pos).printToStream(s);
 	}
 	
@@ -129,6 +139,8 @@ public class Server extends Thread {
 	 * @param s
 	 */
 	public void printToGuessers(String s){ 
+		//this.listOfCommands.add(s);
+		//printToObs(s);
 		for(int i = 0 ; i < this.nbConnected ; i++){
 			if(players.get(i).getType() == TypeJouer.guesser){
 				players.get(i).printToStream(s);
@@ -141,6 +153,8 @@ public class Server extends Thread {
 	 * @param s
 	 */
 	public void printToDrawer(String s){ 
+		this.listOfCommands.add(s);
+		printToObs(s);
 		drawer.printToStream(s);
 	}
 	
@@ -149,10 +163,25 @@ public class Server extends Thread {
 	 * @param s
 	 */
 	public void printToAll(String s){
+		this.listOfCommands.add(s);
+		printToObs(s);
 		for(int i = 0 ; i < this.nbConnected ; i++){
 				players.get(i).printToStream(s);
 			}
 		}
+	
+	
+	public void printToObs(String s){
+		for(int i = 0 ; i < this.observs.size() ; i++)
+			observs.get(i).printToStream(s);
+	}
+	
+	public void AddObs(PlayerClient p){
+		this.observs.add(p);
+		for(int i = 0 ; i < this.listOfCommands.size() ; i++){
+			p.printToStream(listOfCommands.get(i));
+		}
+	}
 	
 	
 	/**
@@ -168,6 +197,7 @@ public class Server extends Thread {
 			game = new Game(this, players, obj);
 			for(int i = 0 ; i < players.size() ; i++)
 				players.get(i).setGame(game);
+			game.setRun(true);
 			game.start();
 			System.out.println("A new game will run");
 		}
@@ -279,5 +309,38 @@ public class Server extends Thread {
 	public void addName(String name){
 		names.add(name);
 	}
+
+
+	public int getCapacity() {
+		return capacity;
+	}
+
+
+	public void setCapacity(int capacity) {
+		this.capacity = capacity;
+	}
+
+
+	public int getNbConnected() {
+		return nbConnected;
+	}
+
+
+	public void setNbConnected(int nbConnected) {
+		this.nbConnected = nbConnected;
+	}
+
+
+	public ArrayList<String> getListOfCommands() {
+		return listOfCommands;
+	}
+
+
+	public void setListOfCommands(ArrayList<String> listOfCommands) {
+		this.listOfCommands = listOfCommands;
+	}
+	
+	
+	
 	
 }

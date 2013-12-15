@@ -22,6 +22,7 @@ public class Game extends Thread {
 	private ArrayList<PlayerClient> players;
 	ArrayList<PlayerClient> founds;
 	PlayerClient drawer;
+	private boolean run;
 	
 	
 	
@@ -46,40 +47,46 @@ public class Game extends Thread {
 	 */
 	
 	public void run() {
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-		for(int i = 0 ; i < players.size() ; i++){
-			startNewPartie(i);	
-			synchronized(obj){
-					try {
-						obj.wait();
-					} catch (InterruptedException e) {
-						//e.printStackTrace();
-					}
-				}
-			if(nbCheat >= 3){
-				serv.printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
-				founds.clear();
-				serv.removeCheater(players.get(i).getPlayerId());
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
 			}
-			if(founds.size() > 0 && founds.size() < players.size()-1){
-				serv.printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
-				runTimer(Config.timeSec);
+			for(int i = 0 ; i < players.size() ; i++){
+				startNewPartie(i);	
 				synchronized(obj){
-					try {
-						obj.wait();
-					} catch (InterruptedException e) {
-						//e.printStackTrace();
+						try {
+							obj.wait();
+						} catch (InterruptedException e) {
+							//e.printStackTrace();
+						}
+					}
+				if(nbCheat >= 3){
+					serv.printToAll("CHEAT/"+players.get(i).getNom()+"/ \n");
+					founds.clear();
+					serv.removeCheater(players.get(i).getPlayerId());
+				}
+				if(founds.size() > 0 && founds.size() < players.size()-1){
+					serv.printToAll("WORD_FOUND_TIMEOUT/"+Config.timeSec+"/ \n");
+					runTimer(Config.timeSec);
+					synchronized(obj){
+						try {
+							obj.wait();
+						} catch (InterruptedException e) {
+						}
 					}
 				}
+				endPartie(i);
 			}
-			endPartie(i);
-		}
 		serv.setRunning(false);
+		synchronized(obj){
+			try {
+				obj.wait();
+			} catch (InterruptedException e) {
+			}
+		}
 		serv.disconnectAll();
+		serv.setListOfCommands(new ArrayList<String>());
 	}
 	
 	/**
@@ -205,7 +212,20 @@ public class Game extends Thread {
 		msg+="\n";
 		serv.printToAll(msg);
 	}
+
+
+	public boolean isRun() {
+		return run;
+	}
+
+
+	public void setRun(boolean run) {
+		this.run = run;
+	}
+	
+	
 }
+
 		
 
 

@@ -7,5 +7,5 @@ package struct;
  *
  */
 public enum TypeJouer {
-	drawer, guesser;
+	drawer, guesser , spec;
 }
