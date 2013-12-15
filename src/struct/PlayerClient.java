@@ -86,8 +86,10 @@ public class PlayerClient extends Thread {
 					}
 					if(command.endsWith("/")){
 						if(command.contains("EXIT/"+name)) { 
-							if(connected)
+							if(connected && this.type != TypeJouer.spec)
 								serv.removePlayer(id);
+							else if(connected && this.type == TypeJouer.spec)
+								serv.removeObs(id);
 							else
 								disconnect();
 							break;
@@ -137,9 +139,14 @@ public class PlayerClient extends Thread {
 							sendDrawingCourbe(command);
 						}else if(command.contains("PASS/") && type==TypeJouer.drawer){
 							serv.notifyObj();
-						}else if(command.contains("SPECTATOR/")  && !connected){
-							initSpec(command.split("/")[1]);
-							serv.printToExcept("CONNECTED/"+name+"/ \n", id);
+						}else if(command.contains("SPECTATOR/")  && !connected ){
+							if(!serv.NameConnected(command.split("/")[1])){
+								initSpec(command.split("/")[1]);
+								serv.printToExcept("CONNECTED/"+name+"/ \n", id);
+							}else{
+								printToStream("ACCESSDENIED/ \n");
+								break;
+							}
 						}else{
 							System.out.println("command unknown will be ignored");
 						}

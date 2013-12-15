@@ -341,6 +341,14 @@ public class Server extends Thread {
 	}
 	
 	
-	
+	public void removeObs(int id){
+		for(int i = 0 ; i < this.observs.size() ; i++){
+			if(observs.get(i).getId() == id){
+				printToExcept("EXITED/"+players.get(i).getNom()+"/\n", id);
+				observs.remove(i);
+				break;
+			}
+		}
+	}
 	
 }
